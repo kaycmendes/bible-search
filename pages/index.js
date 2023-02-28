@@ -1,23 +1,42 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, CSSProperties } from 'react';
 // require('dotenv').config({ path: '../.env' })
 import Navbar from './Navbar.jsx';
 const bibleSearch = require('./api/index.js')
 import Cards from './Cards.jsx'
 
+import BounceLoader from "react-spinners/ClipLoader";
+
+
+
 const Home = () => {
+
   const [query, setQuery] = useState('');
   const [verse, setVerse] = useState('Ask, and it will be given to you; seek, and you will find; knock, and it will be opened to you');
   const [verseLocation, setVerseLocation] = useState('Matthew 7:7')
   const [searchResults, setSearchResults] = useState([]);
   const [isSearched, setIsSearched] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+
+  let [color, setColor] = useState("#ffffff");
+  let [loading, setLoading] = useState(true);
+
+  const override = {
+    display: "block",
+    margin: "0 auto",
+    borderColor: "red",
+  };
+
+
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setIsLoading(true);
     let data = await bibleSearch(query)
     let locationData = data.locationData
     let verseData = data.verseData
     setVerse(verseData)
     setVerseLocation(locationData)
+    setIsLoading(false);
     setIsSearched(true);
     setSearchResults([{ verse: verseData, verseLocation: locationData, query }, ...searchResults]);
     setQuery('');
@@ -50,21 +69,27 @@ const Home = () => {
             <div className=" inset-0 bg-card bg-blur m-auto w-3/4 rounded-2xl">
               <div className="card p-8 z-10 text-center">
 
-                {verse == '' ? (
-                  isSearched && (
-                    <div className="card-contentflex-col m-auto w-auto ">
-                    <p className="text-lg font-serif mb-3">Ask, and it will be given to you; seek, and you will find; knock, and it will be opened to you</p>
-                    <p className="flex-auto text-sm font-semibold text-black-500 relative z-11">Matthew 7:7</p>
-                  </div>
-                  )
-                ) : (
-                  <div className="card-contentflex-col m-auto w-auto ">
-                      <p className="text-lg font-serif mb-3">{verse}</p>
-                      <p className="flex-auto text-sm font-semibold text-black-500 relative z-11">{verseLocation}</p>
+                {
+                  isLoading ? (
+                    <div className="sweet-loading">
+                      <BounceLoader color="#535c6d" />
                     </div>
-                )}
+                  )
+                    :
+                    verse == '' ? (
+                      isSearched && (
+                        <div className="card-contentflex-col m-auto w-auto ">
+                          <p className="text-lg font-serif mb-3">Ask, and it will be given to you; seek, and you will find; knock, and it will be opened to you</p>
+                          <p className="flex-auto text-sm font-semibold text-black-500 relative z-11">Matthew 7:7</p>
+                        </div>
+                      )
+                    ) : (
 
-
+                      <div className="card-contentflex-col m-auto w-auto ">
+                        <p className="text-lg font-serif mb-3">{verse}</p>
+                        <p className="flex-auto text-sm font-semibold text-black-500 relative z-11">{verseLocation}</p>
+                      </div>
+                    )}
 
               </div>
 
@@ -74,6 +99,9 @@ const Home = () => {
         </div>
       </div>
       <div className='w-1/5 custom-bg-left content-center text-center flex h-screen '>
+        <div class="flex flex-col w-full border-opacity-50 ">
+          <div class="grid h-20 card bg-base-300 place-items-center rounded-none">List</div>
+        </div>
         {isSearched && <Cards results={searchResults} />}
       </div>
     </div>

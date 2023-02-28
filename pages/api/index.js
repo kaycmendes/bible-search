@@ -16,11 +16,13 @@ async function bibleSearch(query) {
     const completion = await openai.createCompletion({
         model: "text-davinci-003",
         prompt:
-            `Find a bible verse in that talks about or mention this subject, ${query}." 
-      output ONLY as JSON object 2 var, verse named "verse" and verse location named "location", extrmely important: be short, if ask in portuguese answer in portuguese
-      `,
+            `Find a Bible verse mentioning ${query} and output it as a JSON object with a 'verse' and 'location' variable, space between words, dont include the location inside the verse, IT HAS TO BE JSON"`,
         "max_tokens": 100
     });
+
+
+    //old prompt Find a bible verse in the holy bible that talks about or mention this subject, ${query}." 
+      //output ONLY as JSON object 2 var, verse named "verse" and verse location named "location", extrmely important: be short and no whitespace
 
     let data = completion.data.choices[0].text
     let verseData = await JSON.parse(data)
@@ -32,7 +34,7 @@ async function bibleSearch(query) {
         "locationData": locationData,
         "verseData": verseData
     }
-    return result 
+    return result
 }
 
 module.exports = bibleSearch;
