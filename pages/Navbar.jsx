@@ -1,7 +1,7 @@
 //make a next js component?
 const Navbar = () => {
     return (
-        <div className="navbar bg-base-100 rounded-2xl bottom-36 relative">
+        <div className="navbar bg-base-100 rounded-none fixed top-0 left-0 right-0 z-50">
             <div className="flex-1">
                 <a className="btn btn-ghost normal-case text-xl">Bible Search ✝️</a>
             </div>
