@@ -13,7 +13,7 @@ async function bibleSearch(query) {
     const completion = await openai.createCompletion({
         model: "text-davinci-003",
         prompt:
-            `Find a Bible verse mentioning ${query} and output it as a JSON object with a 'verse' and 'location' variable, space between words, dont include the location inside the verse, IT HAS TO BE JSON"`,
+            `Find a Bible verse "KJV and KJV portugues only" that help with the request:${query}. reply it as a JSON object with a 'verse' and 'location' variable, space between words, dont include the location inside the verse, IT HAS TO BE JSON, if ask in pt/br reply in pt/br"`,
         "max_tokens": 100
     });
 

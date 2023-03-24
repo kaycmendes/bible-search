@@ -379,7 +379,7 @@ a {
 
       padding-left: 1em;
 
-  
+
       max-width: 100%;
       width: auto;
       flex-direction: column;
@@ -499,6 +499,7 @@ a {
     background-color: n;
     height: auto;
   }
+
   .card-item {
 
     display: flex;
@@ -509,11 +510,13 @@ a {
     margin: 0px;
 
   }
+
   @media (max-width: 768px) {
     #left-card {
       width: auto;
       margin: auto 0;
     }
+
     #left-card {
 
       display: flow-root list-item;
@@ -526,8 +529,9 @@ a {
       padding-left: 2em;
       width: auto;
     }
+
     .cards-list {
- 
+
       margin: auto;
       padding: 0px;
       height: 100%;
@@ -543,6 +547,7 @@ a {
 
     height: 100vh;
   }
+
   .w-1\/5.custom-bg-left.content-center.text-center.flex.flex-col.h-screen {
     display: contents;
   }
@@ -560,7 +565,7 @@ html {
   margin: 0px;
   padding: 0px;
   height: 0px;
- 
+
 }
 
 
@@ -575,12 +580,13 @@ html {
       padding-left: 0px;
       overflow: scroll;
       padding-top: 1.9em;
-   
+
       bottom: -16px;
       position: inherit;
       word-break: break-word;
       padding-top: 3em;
     }
+
     .cards-list {
       /* width: 100%; */
       width: auto;
@@ -593,33 +599,39 @@ html {
     /* top: 34.3em; */
     /* position: revert; */
     /* position: 40.3em; */
-  
+
     position: static;
 
     overflow: clip;
   }
+
   @media (max-width: 768px) {
     #left-card {
       border-radius: 0px;
     }
+
     .card-item {
       /* min-width: 50%; */
       width: auto;
     }
+
     #left-card {
       /* max-width: 75%; */
       max-width: 100vw;
     }
   }
+
   .bg-card {
     /* position: absolute; */
     z-index: 99;
     position: inherit;
   }
+
   #left-card .card-item {
     /* display: block; */
     display: flex;
   }
+
   #left-card {
     /* padding: 1rem; */
     padding: 1em;
@@ -653,14 +665,45 @@ html {
   overflow: auto;
 }
 
+html body div#__next div.flex.h-screen.flex-col-mobile div.w-1\/5.custom-bg-left.content-center.text-center.flex.flex-col.h-screen div.mobile-cards-bar div.scrollable-cards ul.cards-list li.card-item div#left-card.shadow-md.rounded-lg.p-4.text-white.my-4 svg.w-6.h-6 {
+  display: none;
+}
 
-/* Inline #1 | http://localhost:3000/ */
+
 
 @media (max-width: 768px) {
 
-  
   .bg-card {
     /* border-radius: 1em; */
     border-radius: 0em;
   }
+
+  html body div#__next div.flex.h-screen.flex-col-mobile div.w-1\/5.custom-bg-left.content-center.text-center.flex.flex-col.h-screen div.mobile-cards-bar div.scrollable-cards ul.cards-list li.card-item div#left-card.shadow-md.rounded-lg.p-4.text-white.my-4 svg.w-6.h-6 {
+    justify-content: center;
+    position: absolute;
+    width: 3em;
+    display: inline;
+    top: 15em;
+    left: 16em;
+  }
+
 }
+
+
+/* Inline #1 | http://localhost:3000/ */
+
+@media (max-width: 768px) {
+  html body div#__next div.flex.h-screen.flex-col-mobile div.w-1\/5.custom-bg-left.content-center.text-center.flex.flex-col.h-screen div.mobile-cards-bar div.scrollable-cards ul.cards-list li.card-item div#left-card.shadow-md.rounded-lg.p-4.text-white.my-4 svg.w-6.h-6 {
+    top: 17em;
+    left: 20em;
+  }
+}
+
+
+
+
+
+
+
+
+
