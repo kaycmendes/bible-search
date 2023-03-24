@@ -3,16 +3,13 @@ const { version } = require("react-dom");
 
 
 
-
 const configuration = new Configuration({
-    apiKey: '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'
+    apiKey: process.env.OPENAI_KEY 
 });
 
 const openai = new OpenAIApi(configuration);
 
 async function bibleSearch(query) {
-
-
     const completion = await openai.createCompletion({
         model: "text-davinci-003",
         prompt:
@@ -38,7 +35,3 @@ async function bibleSearch(query) {
 }
 
 module.exports = bibleSearch;
-
-
-
-
