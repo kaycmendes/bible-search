@@ -700,6 +700,45 @@ html body div#__next div.flex.h-screen.flex-col-mobile div.w-1\/5.custom-bg-left
 }
 
 
+/* Inline #1 | http://localhost:3000/ */
+
+@media (max-width: 768px) {
+  html body div#__next div.flex.h-screen.flex-col-mobile div.w-1\/5.custom-bg-left.content-center.text-center.flex.flex-col.h-screen div.mobile-cards-bar div.scrollable-cards ul.cards-list li.card-item div#left-card.shadow-md.rounded-lg.p-4.text-white.my-4 svg.w-6.h-6 {
+    /* top: 17em; */
+    top: 14em;
+  }
+}
+
+@media (max-width: 768px) {
+  @media (max-width: 768px) {
+    .card-item {
+
+      padding-top: 2em;
+      height: auto;
+    }
+  }
+}
+
+#left-card {
+  /* padding: 1em; */
+  padding: 2em;
+}
+
+@media (max-width: 768px) {
+  @media (max-width: 768px) {
+    #left-card {
+      top: 1em;
+    }
+  }
+}
+
+/* Inline #3 | http://localhost:3000/ */
+
+.cards-list {
+  position: inherit;
+}
+
+
 
 
 
