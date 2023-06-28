@@ -914,7 +914,7 @@ li.card-item:nth-child(1) {
   }
   .mobile-cards-bar {
     /* padding: 0px; */
-    padding: 1px;
+    padding: 0px;
   }
 }
 
