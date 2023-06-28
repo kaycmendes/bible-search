@@ -526,7 +526,7 @@ a {
     .card-item {
 
       position: relative;
-      padding-left: 2em;
+      padding-left: 0px;
       width: auto;
     }
 
@@ -712,8 +712,7 @@ html body div#__next div.flex.h-screen.flex-col-mobile div.w-1\/5.custom-bg-left
 @media (max-width: 768px) {
   @media (max-width: 768px) {
     .card-item {
-
-      padding-top: 2em;
+      padding-top: 1em;
       height: auto;
     }
   }
@@ -739,10 +738,294 @@ html body div#__next div.flex.h-screen.flex-col-mobile div.w-1\/5.custom-bg-left
 }
 
 
+.bg-base-100 {
+  --tw-bg-opacity: 1;
+  background-color: rgb(24 26 27);
+  color: white;
+}
+
+.grid.h-20.card.bg-base-300.place-items-center.rounded-none.top-16.mb-10 {
+  background: #343d4e;
+  color: white;
+}
 
 
 
 
+.w-1\/5.custom-bg-left.content-center.text-center.flex.flex-col.h-screen {
+background:#2a303c;
+}
 
+
+
+/* Inline #1 | http://localhost:3000/ */
+
+@media (max-width: 768px) {
+  @media (max-width: 768px) {
+    #left-card {
+      /* top: 1em; */
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  @media (max-width: 768px) {
+    .card-item {
+      /* max-width: 100%; */
+      width: 100%;
+    }
+  }
+  .mobile-cards-bar {
+    /* bottom: 0; */
+    bottom: -16px;
+  }
+}
+
+@media (max-width: 768px) {
+  html body div#__next div.flex.h-screen.flex-col-mobile div.w-1\/5.custom-bg-left.content-center.text-center.flex.flex-col.h-screen div.mobile-cards-bar div.scrollable-cards ul.cards-list li.card-item div#left-card.shadow-md.rounded-lg.p-4.text-white.my-4 svg.w-6.h-6 {
+    /* display: flow-root; */
+    /* display: inherit; */
+  }
+}
+
+@media (max-width: 768px) {
+  html body div#__next div.flex.h-screen.flex-col-mobile div.w-1\/5.custom-bg-left.content-center.text-center.flex.flex-col.h-screen div.mobile-cards-bar div.scrollable-cards ul.cards-list li.card-item div#left-card.shadow-md.rounded-lg.p-4.text-white.my-4 svg.w-6.h-6 {
+    /* top: 14em; */
+    top: 11em;
+  }
+  @media (max-width: 768px) {
+    .card-item {
+      /* padding-top: 1em; */
+      width: auto;
+      padding-top: 2em;
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  html body div#__next div.flex.h-screen.flex-col-mobile div.w-1\/5.custom-bg-left.content-center.text-center.flex.flex-col.h-screen div.mobile-cards-bar div.scrollable-cards ul.cards-list li.card-item div#left-card.shadow-md.rounded-lg.p-4.text-white.my-4 svg.w-6.h-6 {
+    /* left: 20em; */
+    left: 22em;
+  }
+}
+
+@media (max-width: 768px) {
+
+  @media (max-width: 768px) {
+    .card-item {
+      /* padding-left: 0px; */
+      padding-left: 0em;
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  @media (max-width: 768px) {
+    .cards-list {
+      /* height: 100%; */
+      height: auto;
+    }
+  }
+  .mobile-cards-bar {
+    /* padding: 0px; */
+    padding: 1px;
+  }
+}
+
+#left-card {
+  /* padding: 2em; */
+  padding: 1em;
+}
+
+/* Element | http://localhost:3000/ */
+
+li.card-item:nth-child(1) {
+  padding-right: 0.1rem;
+}
+
+
+
+/* Inline #1 | http://localhost:3000/ */
+
+@media (max-width: 768px) {
+  @media (max-width: 768px) {
+    #left-card {
+      /* top: 1em; */
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  @media (max-width: 768px) {
+    .card-item {
+      /* max-width: 100%; */
+      width: 100%;
+    }
+  }
+  .mobile-cards-bar {
+    /* bottom: 0; */
+    bottom: -16px;
+  }
+}
+
+@media (max-width: 768px) {
+  html body div#__next div.flex.h-screen.flex-col-mobile div.w-1\/5.custom-bg-left.content-center.text-center.flex.flex-col.h-screen div.mobile-cards-bar div.scrollable-cards ul.cards-list li.card-item div#left-card.shadow-md.rounded-lg.p-4.text-white.my-4 svg.w-6.h-6 {
+    /* display: flow-root; */
+    /* display: inherit; */
+  }
+}
+
+@media (max-width: 768px) {
+  html body div#__next div.flex.h-screen.flex-col-mobile div.w-1\/5.custom-bg-left.content-center.text-center.flex.flex-col.h-screen div.mobile-cards-bar div.scrollable-cards ul.cards-list li.card-item div#left-card.shadow-md.rounded-lg.p-4.text-white.my-4 svg.w-6.h-6 {
+    /* top: 14em; */
+    top: 11em;
+  }
+  @media (max-width: 768px) {
+    .card-item {
+      /* padding-top: 1em; */
+      padding-top: 2em;
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  html body div#__next div.flex.h-screen.flex-col-mobile div.w-1\/5.custom-bg-left.content-center.text-center.flex.flex-col.h-screen div.mobile-cards-bar div.scrollable-cards ul.cards-list li.card-item div#left-card.shadow-md.rounded-lg.p-4.text-white.my-4 svg.w-6.h-6 {
+    /* left: 20em; */
+    left: 22em;
+  }
+}
+
+@media (max-width: 768px) {
+
+  @media (max-width: 768px) {
+    .card-item {
+      /* padding-left: 0px; */
+      padding-left: 0em;
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  @media (max-width: 768px) {
+    .cards-list {
+      /* height: 100%; */
+      height: auto;
+    }
+  }
+  .mobile-cards-bar {
+    /* padding: 0px; */
+    padding: 1px;
+  }
+}
+
+#left-card {
+  /* padding: 2em; */
+  padding: 1em;
+}
+
+/* Inline #1 | http://localhost:3000/ */
+
+@media (max-width: 768px) {
+  @media (max-width: 768px) {
+    .card-item {
+      /* width: 100%; */
+      width: auto;
+    }
+  }
+}
+
+/* Inline #1 | http://localhost:3000/ */
+
+#left-card {
+  /* padding: 1em; */
+}
+
+@media (max-width: 768px) {
+  @media (max-width: 768px) {
+    #left-card {
+      /* top: 1em; */
+      top: auto;
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  @media (max-width: 768px) {
+    #left-card {
+      top: auto;
+    }
+  }
+}
+
+#left-card {
+  /* padding: 2em; */
+  padding: 1em;
+}
+
+.top-28 {
+  /* top: 4rem; */
+  top: 2rem;
+}
+
+@media (max-width: 768px) {
+  .card-item {
+    /* margin: 0px; */
+  }
+}
+
+/* Element | http://localhost:3000/ */
+
+li.card-item:nth-child(1) {
+  padding-right: 1px;
+}
+
+/* Inline #3 | http://localhost:3000/ */
+
+li.card-item:nth-child(1) > div:nth-child(1) > p:nth-child(2) {
+  height: fit-content;
+  margin: inherit;
+  display: block;
+
+  position: relative;
+}
+
+/* Inline #1 | http://localhost:3000/ */
+
+#left-card {
+  /* padding: 2em; */
+  padding: 2.5em;
+}
+
+
+/* Inline #1 | http://localhost:3000/ */
+.card-item .arrow {
+ display: none;
+}
+
+@media (max-width: 768px) {
+  @media (max-width: 768px) {
+    .card-item {
+      /* padding-top: 2em; */
+      padding-top: 2.36rem;
+    }
+
+    .card-item .arrow {
+      display: inherit;
+      height: auto;
+      width: 75px;
+      padding-left: -1rem;
+      padding-top: -2rem;
+      transform: rotate(89.8deg);
+      position: absolute;
+      left: 18rem;
+      }
+ 
+    }
+   
+}
+
+
+
+/* Inline #3 | http://localhost:3000/ */
 
 
