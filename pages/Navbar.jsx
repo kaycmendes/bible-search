@@ -8,12 +8,12 @@ const Navbar = () => {
                 <a className="btn btn-ghost normal-case text-xl">Bible Search ✝️</a>
             </div>
             <div className="flex-none">
-                <ul className="menu menu-horizontal px-1 space-x-8">
+                {/* <ul className="menu menu-horizontal px-1 space-x-8">
                     <li className="">
                         <Link href="/about">About</Link>
                     </li>
                     <li><a>Login</a></li>
-                </ul>
+                </ul> */}
             </div>
         </div>
     )

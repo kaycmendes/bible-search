@@ -35,7 +35,12 @@ const Home = () => {
 
   return (
     <div className="flex h-screen flex-col-mobile">
-      <div className="w-4/5 custom-bg content-center text-center flex h-screen">
+    <div
+        id="search"
+        className={`w-full custom-bg content-center text-center flex h-screen ${
+          isLoading ? 'hide-div' : ''
+        }`}
+      >
         <div className="content-center m-auto">
           <Navbar className="navbar" />
           <form onSubmit={handleSubmit} className="mb-2">
@@ -75,7 +80,12 @@ const Home = () => {
           </div>
         </div>
       </div>
-      <div className="w-1/5 custom-bg-left content-center text-center flex flex-col h-screen">
+      <div
+        id="answer"
+        className={`w-1/5 custom-bg-left content-center text-center flex flex-col h-screen ${
+          isSearched ? '' : 'hidden-answer'
+        }`}
+      >
         <div className="flex flex-col w-full border-opacity-50 ">
           <div className="grid h-20 card bg-base-300 place-items-center rounded-none top-16 mb-10">List</div>
         </div>

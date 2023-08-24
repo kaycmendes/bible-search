@@ -1002,6 +1002,27 @@ li.card-item:nth-child(1) > div:nth-child(1) > p:nth-child(2) {
  display: none;
 }
 
+
+.show-div-animation {
+  opacity: 0; /* Start with opacity 0 to hide the div */
+  transform: translateX(100%); /* Move the div off the screen initially */
+  animation: showDivAnimation 0.5s forwards; /* Apply the animation */
+}
+
+@keyframes showDivAnimation {
+  to {
+    opacity: 1; /* Show the div by animating opacity */
+    transform: translateX(0); /* Move the div back to its original position */
+  }
+}
+
+/* Your CSS file */
+.hidden-answer {
+  display: none;
+}
+
+
+
 @media (max-width: 768px) {
   @media (max-width: 768px) {
     .card-item {
