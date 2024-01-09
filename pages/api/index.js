@@ -3,8 +3,10 @@ const { version } = require("react-dom");
 
 
 const openai = new OpenAI({
-    apiKey: process.env.OPENAI_KEY // This is also the default, can be omitted
+    apiKey: process.env.OPENAI_KEY, // This is also the default, can be omitted
+    dangerouslyAllowBrowser: true
   });
+  
 
 async function bibleSearch(query) {
     const completion = await openai.chat.completions.create({
