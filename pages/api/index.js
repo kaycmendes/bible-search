@@ -10,7 +10,7 @@ const configuration = new Configuration({
 const openai = new OpenAIApi(configuration);
 
 async function bibleSearch(query) {
-    const completion = await openai.createChatCompletion({
+    const completion = await openai.chat.completions.create({
         model: "gpt-3.5-turbo-1106",
         prompt:
             `Find a Bible verse "KJV only" that help find with the request:${query}. reply it as a JSON object with a 'verse' and 'location' variable, space between words, dont include the location inside the verse, IT HAS TO BE JSON"`,
