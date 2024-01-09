@@ -13,7 +13,7 @@ async function bibleSearch(query) {
         model: "gpt-3.5-turbo",
         prompt:
             `Find a Bible verse "KJV only" that help find with the request:${query}. reply it as a JSON object with a 'verse' and 'location' variable, space between words, dont include the location inside the verse, IT HAS TO BE JSON"`,
-        "max_tokens": 150
+        max_tokens: 150
     });
 
 
