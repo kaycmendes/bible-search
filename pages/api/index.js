@@ -11,7 +11,7 @@ const openai = new OpenAIApi(configuration);
 
 async function bibleSearch(query) {
     const completion = await openai.createCompletion({
-        model: "text-davinci-003",
+        model: "gpt-3.5-turbo-0613",
         prompt:
             `Find a Bible verse "KJV and KJV portugues only" that help with the request:${query}. reply it as a JSON object with a 'verse' and 'location' variable, space between words, dont include the location inside the verse, IT HAS TO BE JSON, if ask in pt/br reply in pt/br"`,
         "max_tokens": 100
