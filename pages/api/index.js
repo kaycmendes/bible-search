@@ -8,23 +8,28 @@ const openai = new OpenAI({
   });
   
 
-async function bibleSearch(query) {
+  async function bibleSearch(query) {
     const completion = await openai.chat.completions.create({
-        model: "gpt-3.5-turbo",
-        prompt:
-            `Find a Bible verse "KJV only" that help find with the request:${query}. reply it as a JSON object with a 'verse' and 'location' variable, space between words, dont include the location inside the verse, IT HAS TO BE JSON"`,
-        max_tokens: 150
+      model: "gpt-3.5-turbo",
+      messages: [
+        {
+          role: "user",
+          content: `Find a Bible verse "KJV only" that helps with the request: ${query}. Reply with a JSON object with 'verse' and 'location' variables, space between words, don't include the location inside the verse. It has to be JSON.`,
+        },
+      ],
+      max_tokens: 150,
+      top_p: 1,
+      temperature: 0.5,
+      frequency_penalty: 0,
+      presence_penalty: 0,
     });
+  
+    // Process the completion response (assuming it's in JSON format)
+    const data = await JSON.parse(completion.choices[0].message.content);
+    const verseData = await data.verse;
+    const locationData = await data.location;
 
-
-    //old prompt Find a bible verse in the holy bible that talks about or mention this subject, ${query}." 
-      //output ONLY as JSON object 2 var, verse named "verse" and verse location named "location", extrmely important: be short and no whitespace
-
-    let data = completion.choices[0].text
-    let verseData = await JSON.parse(data)
-    let locationData = await JSON.parse(data)
-    locationData = await verseData.location
-    verseData = await verseData.verse
+   
     console.log(data)
     let result = {
         "locationData": locationData,
