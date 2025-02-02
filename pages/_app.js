@@ -1,12 +1,16 @@
-import '@/styles/globals.css'
 import { ThemeProvider } from 'next-themes'
 import { Toaster } from 'react-hot-toast'
+import '../styles/globals.css'
 
-export default function App({ Component, pageProps }) {
+function MyApp({ Component, pageProps }) {
   return (
-    <ThemeProvider attribute="class" defaultTheme="light">
-      <Component {...pageProps} />
-      <Toaster />
+    <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+      <div className="min-h-screen bg-background">
+        <Component {...pageProps} />
+        <Toaster />
+      </div>
     </ThemeProvider>
   )
 }
+
+export default MyApp
