@@ -1,5 +1,5 @@
 // Home.jsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Navbar from './Navbar';
 import Cards from './Cards';
 import { Input } from "@/components/ui/input";
@@ -13,7 +13,12 @@ const Home = () => {
   const [query, setQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
-  const { setTheme } = useTheme()
+  const [mounted, setMounted] = useState(false);
+  const { theme } = useTheme();
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -34,6 +39,10 @@ const Home = () => {
       setIsLoading(false);
     }
   };
+
+  if (!mounted) {
+    return null; // or a loading skeleton
+  }
 
   return (
     <div className="min-h-screen bg-background">
