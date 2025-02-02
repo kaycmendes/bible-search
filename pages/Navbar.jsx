@@ -1,23 +1,35 @@
 //make a next js component?
 import Link from 'next/link';
+import { Button } from "@/components/ui/button";
+import { BookOpen, Menu, Sun, Moon } from 'lucide-react';
+import { useTheme } from "next-themes";
 
 const Navbar = () => {
+    const { theme, setTheme } = useTheme();
+
     return (
-        <div className="navbar bg-base-100 rounded-none fixed top-0 left-0 right-0 z-50">
-            <div className="flex-1">
-                <a className="btn btn-ghost normal-case text-xl">Bible Search ✝️</a>
-            </div>
-            <div className="flex-none">
-                {/* <ul className="menu menu-horizontal px-1 space-x-8">
-                    <li className="">
+        <nav className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+            <div className="container flex h-14 items-center justify-between">
+                <Link href="/" className="flex items-center space-x-2">
+                    <BookOpen className="h-6 w-6 text-primary" />
+                    <span className="font-bold text-primary">Scripture Search</span>
+                </Link>
+                <div className="flex items-center gap-4">
+                    <Button 
+                        variant="ghost" 
+                        size="sm"
+                        onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+                        className="text-muted-foreground hover:text-primary"
+                    >
+                        {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+                    </Button>
+                    <Button variant="ghost" asChild className="text-muted-foreground hover:text-primary">
                         <Link href="/about">About</Link>
-                    </li>
-                    <li><a>Login</a></li>
-                </ul> */}
+                    </Button>
+                </div>
             </div>
-        </div>
+        </nav>
     )
 }
-
 
 export default Navbar
