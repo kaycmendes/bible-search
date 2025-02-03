@@ -1,47 +1,38 @@
-export const searchBiblePassage = async (query) => {
-  try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 30000);
+let previousResponses = new Set();
 
+export const searchBiblePassage = async (query, version) => {
+  try {
+    // Get the last verse to explicitly avoid
+    const lastVerse = Array.from(previousResponses).pop();
+    
     const response = await fetch('/api/search', {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ query }),
-      signal: controller.signal
+      body: JSON.stringify({ 
+        query,
+        version,
+        lastVerse, // Send just the last verse to avoid
+      }),
     });
 
-    clearTimeout(timeoutId);
-
     if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error || 'Failed to fetch response');
+      throw new Error('Failed to fetch response');
     }
 
     const data = await response.json();
     
-    try {
-      const content = data.choices[0].message.content;
-      const parsedContent = JSON.parse(content);
-      
-      if (!parsedContent.verse || !parsedContent.location) {
-        throw new Error('Invalid response format');
-      }
+    // Add new response to our Set
+    previousResponses.add(data.verseLocation);
+    
+    // Keep only the last 5 responses to manage memory
+    if (previousResponses.size > 5) {
+      previousResponses = new Set(Array.from(previousResponses).slice(-5));
+    }
 
-      return {
-        verse: parsedContent.verse,
-        verseLocation: parsedContent.location,
-        query
-      };
-    } catch (error) {
-      console.error('Parse Error:', error);
-      throw new Error('Failed to parse AI response. Please try again.');
-    }
+    return data;
   } catch (error) {
-    if (error.name === 'AbortError') {
-      throw new Error('Request timed out. Please try again.');
-    }
     console.error('Error:', error);
     throw error;
   }

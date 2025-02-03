@@ -3,14 +3,16 @@ export default async function handler(req, res) {
     return res.status(405).json({ message: 'Method not allowed' });
   }
 
-  if (!process.env.NEXT_PUBLIC_CHUTES_API_TOKEN) {
-    return res.status(500).json({ error: 'API token not configured' });
-  }
-
   try {
-    console.log('Received query:', req.body.query);
+    const { query, version, lastVerse } = req.body;
 
-    const response = await fetch('https://chutes-deepseek-ai-deepseek-r1.chutes.ai/v1/chat/completions', {
+    if (!process.env.NEXT_PUBLIC_CHUTES_API_TOKEN) {
+      return res.status(500).json({ error: 'API token not configured' });
+    }
+
+    console.log('Received query:', query);
+
+    const response = await fetch('https://chutes-nvidia-llama-3-1-405b-instruct-fp8.chutes.ai/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${process.env.NEXT_PUBLIC_CHUTES_API_TOKEN}`,
@@ -18,15 +20,27 @@ export default async function handler(req, res) {
         'Accept': 'application/json'
       },
       body: JSON.stringify({
-        model: "deepseek-ai/DeepSeek-R1",
+        model: "nvidia/Llama-3.1-405B-Instruct-FP8",
         messages: [
           {
+            role: "system",
+            content: `You are a Bible expert. When providing Bible verses in ${version} version, follow these rules:
+            1. Never repeat the same verse that was just given (last verse was: "${lastVerse}")
+            2. Find a completely different passage that addresses the same topic
+            3. Look in different books of the Bible for variety
+            4. If multiple verses exist on the topic, choose a less commonly quoted one
+            5. ${version === 'ACF' ? 'Provide the verse in Portuguese from Almeida Corrigida Fiel translation' : 'Provide the verse in English'}
+            Return the response in this exact JSON format: {"verse": "verse text", "location": "book chapter:verse"}`
+          },
+          {
             role: "user",
-            content: `Find a Bible verse about: "${req.body.query}". Respond ONLY with a JSON object in this exact format, with no additional text or explanation: {"verse": "the exact bible verse text", "location": "book chapter:verse"}. Do not include any other text, thoughts, or explanations.`
+            content: `Find a different Bible verse about "${query}" than "${lastVerse}". Choose a completely different passage.`
           }
         ],
-        max_tokens: 1024,
-        temperature: 0.7,
+        max_tokens: 256,
+        temperature: 0.9,
+        presence_penalty: 1.0,
+        frequency_penalty: 1.0,
         stream: false
       })
     });
@@ -47,12 +61,25 @@ export default async function handler(req, res) {
     if (jsonMatch) {
       try {
         const parsedJson = JSON.parse(jsonMatch[0]);
-        res.status(200).json({
-          choices: [{
-            message: {
-              content: JSON.stringify(parsedJson)
-            }
-          }]
+        const verse = parsedJson.verse;
+        const verseLocation = parsedJson.location;
+
+        // Strict validation to prevent same verse
+        if (verseLocation === lastVerse) {
+          console.log('Got same verse, retrying...');
+          return handler(req, res);
+        }
+
+        // Also prevent similar verses (same chapter)
+        if (lastVerse && verseLocation.split(':')[0] === lastVerse.split(':')[0]) {
+          console.log('Got verse from same chapter, retrying...');
+          return handler(req, res);
+        }
+
+        return res.status(200).json({
+          verse,
+          verseLocation,
+          query
         });
       } catch (parseError) {
         console.error('Parse Error:', parseError);
