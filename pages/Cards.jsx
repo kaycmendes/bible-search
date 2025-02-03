@@ -1,14 +1,15 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Copy, Share2, RefreshCw, Twitter } from "lucide-react";
+import { Copy, Share2, RefreshCw, Twitter, Trash2 } from "lucide-react";
 import { toast } from 'react-toastify';
 import { motion } from "framer-motion";
 import { Skeleton } from "@/components/ui/skeleton";
 import LoadingText from "@/components/LoadingText";
 import { useEffect, useRef, useState } from 'react';
 import Footer from '@/components/Footer';
+import DeleteConfirmDialog from '@/components/DeleteConfirmDialog';
 
-const Cards = ({ results, isLoading, onRefresh, version }) => {
+const Cards = ({ results, isLoading, onRefresh, version, onDelete }) => {
   const [showFooter, setShowFooter] = useState(false);
   const lastCardRef = useRef(null);
 
@@ -39,7 +40,8 @@ const Cards = ({ results, isLoading, onRefresh, version }) => {
     return <LoadingCard />;
   }
 
-  const resultsArray = Object.entries(results || {});
+  // Convert object to array and reverse it to show newest first
+  const resultsArray = Object.entries(results || {}).reverse();
 
   return (
     <div className="relative h-[calc(100vh-12rem)] overflow-hidden">
@@ -74,6 +76,7 @@ const Cards = ({ results, isLoading, onRefresh, version }) => {
                 verseLocation={value.verseLocation}
                 query={value.query}
                 onRefresh={onRefresh}
+                onDelete={() => onDelete(key)}
                 version={version}
               />
             </motion.div>
@@ -121,7 +124,9 @@ const LoadingCard = () => {
   );
 };
 
-const ScriptureCard = ({ verse, verseLocation, query, onRefresh, version }) => {
+const ScriptureCard = ({ verse, verseLocation, query, onRefresh, onDelete, version }) => {
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+
   const handleCopy = () => {
     navigator.clipboard.writeText(`${verse} - ${verseLocation}`);
     toast.success('Copied to clipboard!');
@@ -132,54 +137,93 @@ const ScriptureCard = ({ verse, verseLocation, query, onRefresh, version }) => {
     window.open(`https://twitter.com/intent/tweet?text=${shareText}`, '_blank');
   };
 
+  const handleRefresh = async () => {
+    try {
+      toast.info(`Finding another verse about "${query}"...`, {
+        autoClose: 2000
+      });
+      await onRefresh(query);
+    } catch (error) {
+      toast.error('Failed to generate a new verse. Please try again.');
+    }
+  };
+
+  const handleDelete = () => {
+    setShowDeleteDialog(true);
+  };
+
+  const handleConfirmDelete = () => {
+    onDelete();
+    setShowDeleteDialog(false);
+  };
+
   return (
-    <Card className="w-full gradient-card">
-      <CardHeader className="space-y-2">
-        <div className="flex justify-between items-center">
-          <CardTitle className="text-base font-medium card-title">
-            {verseLocation}
-          </CardTitle>
-          <span className="text-xs font-medium text-muted-foreground">
-            {version}
-          </span>
-        </div>
-        <p className="text-sm card-query italic">Query: {query}</p>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        <p className="scripture-text">{verse}</p>
-        <div className="flex flex-wrap gap-2">
-          <div className="flex gap-2 w-full sm:w-auto">
+    <>
+      <Card className="w-full gradient-card">
+        <CardHeader className="space-y-2">
+          <div className="flex justify-between items-center">
+            <CardTitle className="text-base font-medium card-title">
+              {verseLocation}
+            </CardTitle>
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-medium text-muted-foreground">
+                {version}
+              </span>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={handleDelete}
+                className="h-8 w-8 text-muted-foreground hover:text-destructive transition-colors"
+                title="Remove card"
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+          <p className="text-sm card-query italic">Query: {query}</p>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <p className="scripture-text">{verse}</p>
+          <div className="flex flex-wrap gap-2">
+            <div className="flex gap-2 w-full sm:w-auto">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={handleCopy}
+                className="btn-secondary flex-1 sm:flex-initial"
+              >
+                <Copy className="h-4 w-4 mr-2" />
+                Copy
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={handleTweet}
+                className="btn-secondary flex-1 sm:flex-initial"
+              >
+                <Twitter className="h-4 w-4 mr-2" />
+                Tweet
+              </Button>
+            </div>
             <Button 
               variant="outline" 
               size="sm" 
-              onClick={handleCopy}
-              className="btn-secondary flex-1 sm:flex-initial"
+              onClick={handleRefresh}
+              className="btn-secondary w-full sm:w-auto sm:ml-auto"
             >
-              <Copy className="h-4 w-4 mr-2" />
-              Copy
-            </Button>
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={handleTweet}
-              className="btn-secondary flex-1 sm:flex-initial"
-            >
-              <Twitter className="h-4 w-4 mr-2" />
-              Tweet
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Generate Another
             </Button>
           </div>
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={() => onRefresh(query)}
-            className="btn-secondary w-full sm:w-auto sm:ml-auto"
-          >
-            <RefreshCw className="h-4 w-4 mr-2" />
-            Generate Another
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
+
+      <DeleteConfirmDialog
+        isOpen={showDeleteDialog}
+        onClose={() => setShowDeleteDialog(false)}
+        onConfirm={handleConfirmDelete}
+      />
+    </>
   );
 };
 
