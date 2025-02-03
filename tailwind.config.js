@@ -89,6 +89,46 @@ module.exports = {
       },
       animation: {
         shimmer: "shimmer 2s linear infinite",
+        'glow-1': 'glow1 4s ease-in-out infinite alternate',
+        'glow-2': 'glow2 6s ease-in-out infinite alternate',
+        'glow-3': 'glow3 8s ease-in-out infinite alternate',
+        'border-flow': 'borderFlow 8s linear infinite',
+        bounce: 'bounce 1s infinite',
+      },
+      keyframes: {
+        glow1: {
+          '0%': { transform: 'scale(0.8) translate(-10%, -10%)', opacity: 0.5 },
+          '100%': { transform: 'scale(1.2) translate(10%, 10%)', opacity: 0.8 }
+        },
+        glow2: {
+          '0%': { transform: 'scale(1.2) translate(10%, -10%)', opacity: 0.3 },
+          '100%': { transform: 'scale(0.8) translate(-10%, 10%)', opacity: 0.6 }
+        },
+        glow3: {
+          '0%': { transform: 'scale(1) translate(0%, 10%)', opacity: 0.4 },
+          '100%': { transform: 'scale(1.1) translate(0%, -10%)', opacity: 0.7 }
+        },
+        borderFlow: {
+          '0%, 100%': {
+            filter: 'drop-shadow(0 0 2px rgba(18, 70, 126, 0.3))',
+          },
+          '50%': {
+            filter: 'drop-shadow(0 0 6px rgba(50, 108, 68, 0.5))',
+          }
+        },
+        bounce: {
+          '0%, 100%': {
+            transform: 'translateY(0)',
+            opacity: 0.5,
+          },
+          '50%': {
+            transform: 'translateY(-25%)',
+            opacity: 1,
+          },
+        },
+      },
+      fontFamily: {
+        cinzel: ['Cinzel', 'serif'],
       },
     },
   },
