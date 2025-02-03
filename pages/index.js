@@ -9,6 +9,8 @@ import { searchBiblePassage } from '@/utils/api';
 import { toast } from 'react-hot-toast';
 import { useTheme } from "next-themes";
 import VersionSelector from '@/components/VersionSelector';
+import LoginDialog from '@/components/LoginDialog';
+import { useLoginPrompt } from '@/hooks/useLoginPrompt';
 
 const Home = () => {
   const [query, setQuery] = useState('');
@@ -24,6 +26,7 @@ const Home = () => {
   const [mounted, setMounted] = useState(false);
   const [version, setVersion] = useState('KJV');
   const { theme } = useTheme();
+  const { showLoginPrompt, setShowLoginPrompt } = useLoginPrompt(searchResults);
 
   // Handle mounting
   useEffect(() => {
@@ -38,17 +41,32 @@ const Home = () => {
   }, [searchResults, mounted]);
 
   const handleSearch = async (searchQuery) => {
+    if (!searchQuery?.trim()) {
+      toast.error('Please enter a search query');
+      return;
+    }
+
     setIsLoading(true);
+    
     try {
       const result = await searchBiblePassage(searchQuery, version);
+      
+      if (!result) {
+        throw new Error('No results found');
+      }
+
       setSearchResults(prev => ({
         ...prev,
         [Date.now()]: result
       }));
+      
       setQuery('');
+      toast.success('Verse found!');
+      
     } catch (error) {
-      console.error('Error:', error);
+      console.error('Search failed:', error);
       toast.error(error.message || 'Failed to get response. Please try again.');
+      
     } finally {
       setIsLoading(false);
     }
@@ -134,10 +152,10 @@ const Home = () => {
       </div>
 
       <Navbar />
-      <main className="flex-1 container max-w-4xl mx-auto px-4 py-8 overflow-hidden relative">
-        {/* Animated Open Book Icon and Title */}
-        <div className="flex flex-col items-center mb-8">
-          {/* Glowing effect layers */}
+      
+      <main className="flex-1 container max-w-4xl mx-auto px-4 pt-2 sm:pt-6 overflow-hidden relative">
+        {/* Animated Open Book Icon and Title - Reduced top spacing */}
+        <div className="flex flex-col items-center mb-3 sm:mb-6">
           <div className="relative">
             <div className="absolute inset-0 blur-2xl animate-glow-1 bg-gradient-to-r from-navy-400/30 to-sage-400/30" />
             <div className="absolute inset-0 blur-xl animate-glow-2 bg-gradient-to-l from-navy-300/20 to-sage-300/20" />
@@ -146,7 +164,7 @@ const Home = () => {
             {/* Book icon */}
             <svg
               viewBox="0 0 24 24"
-              className="relative w-16 h-16 sm:w-20 sm:h-20 animate-gradient mb-4"
+              className="relative w-10 h-10 sm:w-16 sm:h-16 animate-gradient mb-2 sm:mb-3"
               fill="none"
               xmlns="http://www.w3.org/2000/svg"
             >
@@ -159,63 +177,60 @@ const Home = () => {
               />
             </svg>
           </div>
-          <h1 className="font-cinzel text-2xl sm:text-3xl tracking-[0.2em] text-navy-800 dark:text-cream-100 font-semibold">
+          <h1 className="font-cinzel text-lg sm:text-3xl tracking-[0.2em] text-navy-800 dark:text-cream-100 font-semibold">
             HOLY BIBLE
           </h1>
         </div>
 
-        {/* Mobile-optimized search section */}
-        <div className="flex flex-col gap-4 sm:gap-2 sm:flex-row">
-          {/* Search input - Full width on mobile */}
-          <div className="flex-1 flex flex-col gap-4 sm:gap-2 sm:flex-row">
-            <Input
-              type="text"
-              placeholder="Search for verses..."
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleSearch(query)}
-              className="w-full h-12 sm:h-10 px-4 rounded-xl sm:rounded-lg bg-[#fffbf2] dark:bg-navy-800/50 border-0 focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-gray-500 dark:placeholder:text-cream-200/50 dark:text-cream-50 text-lg sm:text-base"
-            />
-            
-            {/* Version selector - Full width on mobile */}
-            <div className="w-full sm:w-auto sm:min-w-[140px]">
+        {/* Search section - Adjusted heights */}
+        <div className="w-full max-w-5xl mx-auto px-2 sm:px-4 mb-2 sm:mb-4">
+          <div className="flex flex-col sm:flex-row w-full bg-cream-50/80 dark:bg-navy-800/50 rounded-xl sm:rounded-2xl overflow-hidden border border-cream-200/20 dark:border-navy-700/20 shadow-lg hover:shadow-xl transition-all duration-300">
+            {/* Input with reduced height on mobile */}
+            <div className="flex-1 flex items-stretch">
+              <Input
+                type="text"
+                placeholder="Search for verses..."
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleSearch(query)}
+                className="flex-1 h-full min-h-[3rem] sm:min-h-[4rem] px-4 sm:px-8 bg-transparent border-0 focus-visible:ring-0 focus-visible:ring-offset-0 focus:outline-none text-base sm:text-xl placeholder:text-navy-400/60 dark:placeholder:text-cream-200/40 text-navy-800 dark:text-cream-50"
+              />
+            </div>
+
+            {/* Version selector - Reduced height on mobile */}
+            <div className="border-t sm:border-t-0 border-cream-200/50 dark:border-navy-700/50">
               <VersionSelector
                 version={version}
                 onVersionChange={setVersion}
-                className="w-full h-12 sm:h-10 bg-[#fffbf2] dark:bg-navy-800/50 rounded-xl sm:rounded-lg"
+                className="w-full sm:w-[100px] h-12 sm:h-16"
               />
             </div>
-          </div>
 
-          {/* Search button - Full width on mobile */}
-          <Button 
-            onClick={() => handleSearch(query)}
-            variant="default"
-            className="w-full sm:w-auto h-12 sm:h-10 rounded-xl sm:rounded-lg flex items-center justify-center gap-2 text-cream-50 dark:text-navy-900 shadow-md hover:shadow-lg transition-all duration-300 bg-gradient-to-r from-navy-600 to-sage-600 hover:from-navy-500 hover:to-sage-500 dark:from-cream-100 dark:to-cream-200 dark:hover:from-cream-50 dark:hover:to-cream-100"
-          >
-            {isLoading ? (
-              <Loader2 className="h-5 w-5 animate-spin" />
-            ) : (
-              <>
-                <Search className="h-5 w-5" />
-                <span className="sm:hidden">Search</span>
-              </>
-            )}
-          </Button>
+            {/* Search button - Reduced height on mobile */}
+            <Button 
+              onClick={() => handleSearch(query)}
+              disabled={isLoading}
+              className="h-12 sm:h-16 px-6 sm:px-12 rounded-none bg-gradient-to-r from-navy-600 to-sage-600 hover:from-navy-500 hover:to-sage-500 dark:from-navy-700 dark:to-navy-800 dark:hover:from-navy-600 dark:hover:to-navy-700 text-cream-50 transition-all duration-300 flex items-center justify-center gap-2 sm:gap-3 focus:outline-none focus-visible:outline-none"
+            >
+              {isLoading ? (
+                <Loader2 className="h-5 w-5 sm:h-6 sm:w-6 animate-spin" />
+              ) : (
+                <>
+                  <Search className="h-5 w-5 sm:h-6 sm:w-6" />
+                  <span className="text-base sm:text-lg font-medium">Search</span>
+                </>
+              )}
+            </Button>
+          </div>
         </div>
 
-        {/* Clear All button and spacing - Only show if there are results */}
+        {/* Clear All button */}
         {Object.keys(searchResults).length > 0 && (
-          <div className="flex justify-end mt-4 mb-2">
+          <div className="flex justify-end mt-2 mb-2">
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => {
-                // Show confirmation dialog before clearing
-                if (window.confirm('Are you sure you want to clear all cards? This action cannot be undone.')) {
-                  handleClearHistory();
-                }
-              }}
+              onClick={handleClearHistory}
               className="text-muted-foreground hover:text-destructive transition-colors flex items-center gap-2"
             >
               <Trash className="h-4 w-4" />
@@ -224,18 +239,23 @@ const Home = () => {
           </div>
         )}
 
-        {/* Add some space between search and results */}
-        <div className="h-4" />
-
-        {/* Cards section */}
-        <Cards
-          results={searchResults}
-          isLoading={isLoading}
-          onRefresh={handleRefresh}
-          onDelete={handleDeleteCard}
-          version={version}
-        />
+        {/* Cards section - Adjusted height calculation */}
+        <div className="h-[calc(100vh-12rem)] sm:h-[calc(100vh-16rem)] overflow-hidden">
+          <Cards
+            results={searchResults}
+            isLoading={isLoading}
+            onRefresh={handleRefresh}
+            onDelete={handleDeleteCard}
+            version={version}
+          />
+        </div>
       </main>
+
+      {/* Login Dialog */}
+      <LoginDialog 
+        isOpen={showLoginPrompt}
+        onClose={() => setShowLoginPrompt(false)}
+      />
     </div>
   );
 };

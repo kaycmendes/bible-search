@@ -10,29 +10,32 @@ import {
 
 const VersionSelector = ({ version, onVersionChange, className }) => {
   const versions = [
-    { value: 'KJV', label: 'King James Version (KJV)' },
-    { value: 'NKJV', label: 'New King James Version (NKJV)' },
-    { value: 'ACF', label: 'Almeida Corrigida Fiel (ACF)' },
+    { value: 'KJV', label: 'KJV', fullName: 'King James Version' },
+    { value: 'NKJV', label: 'NKJV', fullName: 'New King James Version' },
+    { value: 'ACF', label: 'ACF', fullName: 'Almeida Corrigida Fiel' },
   ];
 
   return (
     <div className={className}>
       <Select value={version} onValueChange={onVersionChange}>
-        <SelectTrigger className="w-full h-full border-0 bg-transparent focus:ring-0 hover:bg-white/50 dark:hover:bg-gray-800 dark:text-cream-50">
+        <SelectTrigger 
+          className="w-full h-full border-0 bg-transparent hover:bg-white/20 dark:hover:bg-navy-700/30 text-navy-800 dark:text-cream-50 transition-colors duration-300 focus:outline-none focus-visible:outline-none text-sm sm:text-base px-2 sm:px-4"
+        >
           <SelectValue 
-            placeholder="Select version" 
-            className="dark:text-cream-50 text-base w-full h-full"
+            placeholder="KJV"
+            className="text-sm sm:text-base font-medium text-navy-800 dark:text-cream-50"
           />
         </SelectTrigger>
         <SelectContent 
-          className="dark:bg-navy-800 dark:border-navy-700"
+          className="bg-cream-50 dark:bg-navy-800 border-cream-200 dark:border-navy-700"
           align="center"
         >
           {versions.map((v) => (
             <SelectItem 
               key={v.value} 
               value={v.value} 
-              className="dark:text-cream-50 dark:hover:bg-navy-700 h-12"
+              className="text-navy-800 dark:text-cream-50 hover:bg-cream-100 dark:hover:bg-navy-700 h-10"
+              title={v.fullName}
             >
               {v.label}
             </SelectItem>

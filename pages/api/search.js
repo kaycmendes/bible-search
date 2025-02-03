@@ -12,7 +12,7 @@ export default async function handler(req, res) {
 
     console.log('Starting search for:', query, 'Version:', version);
 
-    const response = await fetch('https://chutes-nvidia-llama-3-1-405b-instruct-fp8.chutes.ai/v1/chat/completions', {
+    const response = await fetch('https://chutes-chutesai-llama-3-1-tulu-3-405b-fp8-dynamic.chutes.ai/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${process.env.NEXT_PUBLIC_CHUTES_API_TOKEN}`,
@@ -20,7 +20,7 @@ export default async function handler(req, res) {
         'Accept': 'application/json'
       },
       body: JSON.stringify({
-        model: "nvidia/Llama-3.1-405B-Instruct-FP8",
+        model: "chutesai/Llama-3.1-Tulu-3-405B-FP8-dynamic",
         messages: [
           {
             role: "system",

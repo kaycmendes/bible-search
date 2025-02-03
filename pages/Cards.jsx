@@ -78,6 +78,7 @@ const Cards = ({ results, isLoading, onRefresh, version, onDelete }) => {
                 onRefresh={onRefresh}
                 onDelete={() => onDelete(key)}
                 version={version}
+                id={key}
               />
             </motion.div>
           ))}
@@ -124,7 +125,7 @@ const LoadingCard = () => {
   );
 };
 
-const ScriptureCard = ({ verse, verseLocation, query, onRefresh, onDelete, version }) => {
+const ScriptureCard = ({ verse, verseLocation, query, onRefresh, onDelete, version, id }) => {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   const handleCopy = () => {
@@ -153,16 +154,16 @@ const ScriptureCard = ({ verse, verseLocation, query, onRefresh, onDelete, versi
   };
 
   const handleConfirmDelete = () => {
-    onDelete();
+    onDelete(id);
     setShowDeleteDialog(false);
   };
 
   return (
     <>
       <Card className="w-full gradient-card">
-        <CardHeader className="space-y-2">
+        <CardHeader className="space-y-1 sm:space-y-2 p-4 sm:p-6">
           <div className="flex justify-between items-center">
-            <CardTitle className="text-base font-medium card-title">
+            <CardTitle className="text-sm sm:text-base font-medium card-title">
               {verseLocation}
             </CardTitle>
             <div className="flex items-center gap-2">
@@ -173,45 +174,45 @@ const ScriptureCard = ({ verse, verseLocation, query, onRefresh, onDelete, versi
                 variant="ghost"
                 size="icon"
                 onClick={handleDelete}
-                className="h-8 w-8 text-muted-foreground hover:text-destructive transition-colors"
+                className="h-7 w-7 sm:h-8 sm:w-8 text-navy-500 hover:text-red-600 dark:text-cream-200 dark:hover:text-red-400 transition-colors"
                 title="Remove card"
               >
-                <Trash2 className="h-4 w-4" />
+                <Trash2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
               </Button>
             </div>
           </div>
-          <p className="text-sm card-query italic">Query: {query}</p>
+          <p className="text-xs sm:text-sm card-query italic">Query: {query}</p>
         </CardHeader>
-        <CardContent className="space-y-6">
-          <p className="scripture-text">{verse}</p>
+        <CardContent className="space-y-4 sm:space-y-6 p-4 sm:p-6">
+          <p className="scripture-text text-base sm:text-xl">{verse}</p>
           <div className="flex flex-wrap gap-2">
             <div className="flex gap-2 w-full sm:w-auto">
               <Button 
                 variant="outline" 
-                size="sm" 
+                size="sm"
                 onClick={handleCopy}
-                className="btn-secondary flex-1 sm:flex-initial"
+                className="flex-1 sm:flex-initial h-8 sm:h-10"
               >
-                <Copy className="h-4 w-4 mr-2" />
+                <Copy className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-2" />
                 Copy
               </Button>
               <Button 
                 variant="outline" 
-                size="sm" 
+                size="sm"
                 onClick={handleTweet}
-                className="btn-secondary flex-1 sm:flex-initial"
+                className="flex-1 sm:flex-initial h-8 sm:h-10"
               >
-                <Twitter className="h-4 w-4 mr-2" />
+                <Twitter className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-2" />
                 Tweet
               </Button>
             </div>
             <Button 
               variant="outline" 
-              size="sm" 
+              size="sm"
               onClick={handleRefresh}
-              className="btn-secondary w-full sm:w-auto sm:ml-auto"
+              className="w-full sm:w-auto sm:ml-auto h-8 sm:h-10"
             >
-              <RefreshCw className="h-4 w-4 mr-2" />
+              <RefreshCw className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-2" />
               Generate Another
             </Button>
           </div>

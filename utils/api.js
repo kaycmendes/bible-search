@@ -2,7 +2,10 @@ let previousResponses = new Set();
 
 export const searchBiblePassage = async (query, version) => {
   try {
-    // Get the last verse to explicitly avoid
+    if (!query?.trim()) {
+      throw new Error('Please enter a search query');
+    }
+
     const lastVerse = Array.from(previousResponses).pop();
     
     const response = await fetch('/api/search', {
@@ -11,29 +14,32 @@ export const searchBiblePassage = async (query, version) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({ 
-        query,
+        query: query.trim(),
         version,
-        lastVerse, // Send just the last verse to avoid
+        lastVerse,
       }),
     });
 
     if (!response.ok) {
-      throw new Error('Failed to fetch response');
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to fetch response');
     }
 
     const data = await response.json();
     
-    // Add new response to our Set
+    if (!data || !data.verseLocation) {
+      throw new Error('Invalid response format');
+    }
+    
     previousResponses.add(data.verseLocation);
     
-    // Keep only the last 5 responses to manage memory
     if (previousResponses.size > 5) {
       previousResponses = new Set(Array.from(previousResponses).slice(-5));
     }
 
     return data;
   } catch (error) {
-    console.error('Error:', error);
+    console.error('Search error:', error);
     throw error;
   }
 }; 
