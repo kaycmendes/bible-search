@@ -28,7 +28,7 @@ const Terms = () => {
                 <h2 className="text-2xl font-semibold text-navy-800 dark:text-cream-50 m-0">1. Acceptance of Terms</h2>
               </div>
               <p className="text-gray-600 dark:text-gray-300">
-                By accessing or using Ask the Bible ("the Service"), you agree to be bound by these Terms of Service. 
+                By accessing or using Ask the Bible (&quot;the Service&quot;), you agree to be bound by these Terms of Service. 
                 If you do not agree to these terms, please do not use the Service.
               </p>
             </section>
@@ -92,7 +92,7 @@ const Terms = () => {
                 <h2 className="text-2xl font-semibold text-navy-800 dark:text-cream-50 m-0">5. Disclaimer</h2>
               </div>
               <p className="text-gray-600 dark:text-gray-300">
-                The Service is provided "as is" without warranties of any kind. We do not guarantee 
+                The Service is provided &quot;as is&quot; without warranties of any kind. We do not guarantee 
                 the accuracy or completeness of any information provided.
               </p>
             </section>
