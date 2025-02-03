@@ -4,7 +4,7 @@ import Navbar from './Navbar';
 import Cards from './Cards';
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Search, Loader2 } from "lucide-react";
+import { Search, Loader2, Trash } from "lucide-react";
 import { searchBiblePassage } from '@/utils/api';
 import { toast } from 'react-hot-toast';
 import { useTheme } from "next-themes";
@@ -16,9 +16,9 @@ const Home = () => {
     // Initialize from localStorage if available
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('searchResults');
-      return saved ? JSON.parse(saved) : [];
+      return saved ? JSON.parse(saved) : {};
     }
-    return [];
+    return {};
   });
   const [isLoading, setIsLoading] = useState(false);
   const [mounted, setMounted] = useState(false);
@@ -41,7 +41,10 @@ const Home = () => {
     setIsLoading(true);
     try {
       const result = await searchBiblePassage(searchQuery, version);
-      setSearchResults(prev => [result, ...prev]);
+      setSearchResults(prev => ({
+        ...prev,
+        [Date.now()]: result
+      }));
       setQuery('');
     } catch (error) {
       console.error('Error:', error);
@@ -52,7 +55,7 @@ const Home = () => {
   };
 
   const handleClearHistory = () => {
-    setSearchResults([]);
+    setSearchResults({});
     localStorage.removeItem('searchResults');
     toast.success('Search history cleared');
   };
@@ -68,6 +71,22 @@ const Home = () => {
 
   const handleRefresh = async (queryToRefresh) => {
     handleSearch(queryToRefresh);
+  };
+
+  const handleDeleteCard = (key) => {
+    setSearchResults(prev => {
+      const newResults = { ...prev };
+      delete newResults[key];
+      
+      // Save to localStorage
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('searchResults', JSON.stringify(newResults));
+      }
+      
+      return newResults;
+    });
+    
+    toast.success('Card removed');
   };
 
   // Show loading state while mounting
@@ -185,14 +204,35 @@ const Home = () => {
           </Button>
         </div>
 
+        {/* Clear All button and spacing - Only show if there are results */}
+        {Object.keys(searchResults).length > 0 && (
+          <div className="flex justify-end mt-4 mb-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                // Show confirmation dialog before clearing
+                if (window.confirm('Are you sure you want to clear all cards? This action cannot be undone.')) {
+                  handleClearHistory();
+                }
+              }}
+              className="text-muted-foreground hover:text-destructive transition-colors flex items-center gap-2"
+            >
+              <Trash className="h-4 w-4" />
+              Clear All Cards
+            </Button>
+          </div>
+        )}
+
         {/* Add some space between search and results */}
-        <div className="h-8" />
+        <div className="h-4" />
 
         {/* Cards section */}
         <Cards
           results={searchResults}
           isLoading={isLoading}
           onRefresh={handleRefresh}
+          onDelete={handleDeleteCard}
           version={version}
         />
       </main>
