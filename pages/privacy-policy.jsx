@@ -28,7 +28,7 @@ const PrivacyPolicy = () => {
                 <h2 className="text-2xl font-semibold text-navy-800 dark:text-cream-50 m-0">Introduction</h2>
               </div>
               <p className="text-gray-600 dark:text-gray-300">
-                Ask the Bible ("we," "our," or "us") respects your privacy and is committed to protecting your personal data. 
+                Ask the Bible (&quot;we,&quot; &quot;our,&quot; or &quot;us&quot;) respects your privacy and is committed to protecting your personal data. 
                 This privacy policy explains how we collect, use, and protect your information when you use our application.
               </p>
             </section>
