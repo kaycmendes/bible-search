@@ -210,7 +210,7 @@ const Home = () => {
             <Button 
               onClick={() => handleSearch(query)}
               disabled={isLoading}
-              className="h-12 sm:h-16 px-6 sm:px-12 rounded-none bg-gradient-to-r from-navy-600 to-sage-600 hover:from-navy-500 hover:to-sage-500 dark:from-navy-700 dark:to-navy-800 dark:hover:from-navy-600 dark:hover:to-navy-700 text-cream-50 transition-all duration-300 flex items-center justify-center gap-2 sm:gap-3 focus:outline-none focus-visible:outline-none"
+              className="relative z-20 h-12 sm:h-16 px-6 sm:px-12 rounded-none bg-gradient-to-r from-navy-600 to-sage-600 hover:from-navy-500 hover:to-sage-500 dark:from-navy-700 dark:to-navy-800 dark:hover:from-navy-600 dark:hover:to-navy-700 text-cream-50 transition-all duration-300 flex items-center justify-center gap-2 sm:gap-3 focus:outline-none focus-visible:outline-none"
             >
               {isLoading ? (
                 <Loader2 className="h-5 w-5 sm:h-6 sm:w-6 animate-spin" />
@@ -231,7 +231,7 @@ const Home = () => {
               variant="ghost"
               size="sm"
               onClick={handleClearHistory}
-              className="text-muted-foreground hover:text-destructive transition-colors flex items-center gap-2"
+              className="relative z-10 text-muted-foreground hover:text-destructive transition-colors flex items-center gap-2"
             >
               <Trash className="h-4 w-4" />
               Clear All Cards

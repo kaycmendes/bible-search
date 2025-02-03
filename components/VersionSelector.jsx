@@ -27,19 +27,20 @@ const VersionSelector = ({ version, onVersionChange, className }) => {
           />
         </SelectTrigger>
         <SelectContent 
-          className="bg-cream-50 dark:bg-navy-800 border-cream-200 dark:border-navy-700"
+          className="z-[1000] bg-cream-50 dark:bg-navy-800 border-cream-200 dark:border-navy-700"
           align="center"
+          sideOffset={4}
         >
-          {versions.map((v) => (
-            <SelectItem 
-              key={v.value} 
-              value={v.value} 
-              className="text-navy-800 dark:text-cream-50 hover:bg-cream-100 dark:hover:bg-navy-700 h-10"
-              title={v.fullName}
-            >
-              {v.label}
-            </SelectItem>
-          ))}
+            {versions.map((v) => (
+              <SelectItem 
+                key={v.value} 
+                value={v.value} 
+                className="text-navy-800 dark:text-cream-50 hover:bg-cream-100 dark:hover:bg-navy-700 h-10"
+                title={v.fullName}
+              >
+                {v.label}
+              </SelectItem>
+            ))}
         </SelectContent>
       </Select>
     </div>
