@@ -20,7 +20,7 @@ const Navbar = () => {
                 <div className="container flex h-14 items-center justify-between">
                     <Link href="/" className="flex items-center space-x-2">
                         <BookOpen className="h-6 w-6 text-primary" />
-                        <span className="font-bold text-primary">Scripture Search</span>
+                        <span className="font-bold text-primary">Ask the Bible</span>
                     </Link>
                     <div className="flex items-center gap-4">
                         <Button variant="ghost" size="sm" className="w-9 px-0">
@@ -40,7 +40,7 @@ const Navbar = () => {
             <div className="container flex h-14 items-center justify-between">
                 <Link href="/" className="flex items-center space-x-2">
                     <BookOpen className="h-6 w-6 text-primary" />
-                    <span className="font-bold text-primary">Scripture Search</span>
+                    <span className="font-bold text-primary">Ask the Bible</span>
                 </Link>
                 <div className="flex items-center gap-4">
                     <Button 
