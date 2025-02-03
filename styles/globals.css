@@ -1,8 +1,12 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Raleway:wght@300;400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Lora:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@600&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-@import url('https://fonts.googleapis.com/css2?family=Raleway:wght@300;400;500;600&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Lora:wght@400;500;600&display=swap');
 
 @layer base {
   :root {
@@ -40,33 +44,33 @@
     --cream-800: 100 89 69;
     --cream-900: 50 45 35;
 
-    /* Theme tokens */
-    --background: var(--cream-50);
-    --foreground: var(--navy-900);
+    /* Theme tokens - Light Mode with better readability */
+    --background: 255 255 255;
+    --foreground: var(--navy-800);
 
-    --card: 255 255 255;
-    --card-foreground: var(--navy-800);
+    --card: var(--cream-50);
+    --card-foreground: var(--navy-700);
 
-    --popover: 255 255 255;
+    --popover: var(--cream-50);
     --popover-foreground: var(--navy-800);
 
-    --primary: var(--navy-600);
+    --primary: var(--navy-700);
     --primary-foreground: var(--cream-50);
 
-    --secondary: var(--sage-100);
+    --secondary: var(--sage-200);
     --secondary-foreground: var(--sage-900);
 
     --muted: var(--cream-100);
-    --muted-foreground: var(--navy-600);
+    --muted-foreground: var(--navy-700);
 
-    --accent: var(--sage-100);
+    --accent: var(--sage-200);
     --accent-foreground: var(--sage-900);
 
     --destructive: 239 68 68;
     --destructive-foreground: var(--cream-50);
 
-    --border: var(--cream-200);
-    --input: var(--cream-200);
+    --border: var(--cream-300);
+    --input: var(--cream-300);
     --ring: var(--navy-700);
 
     --radius: 0.5rem;
@@ -109,7 +113,7 @@
   }
   body {
     @apply bg-background text-foreground;
-    font-family: 'Raleway', sans-serif;
+    font-family: 'Inter', sans-serif;
   }
 }
 
@@ -129,7 +133,11 @@
 
 /* Custom Components Styling */
 .search-bar {
-  @apply bg-background border-2 border-primary/20 focus:border-primary/40 transition-colors;
+  @apply bg-cream-50 border border-cream-300/50 focus:border-navy-400 transition-all duration-300;
+  @apply h-14 text-lg px-6 rounded-xl;
+  @apply shadow-sm hover:shadow-md;
+  @apply dark:bg-navy-800/50 dark:border-navy-700/50 dark:focus:border-cream-200/50;
+  @apply placeholder:text-navy-400/70 dark:placeholder:text-cream-200/50;
 }
 
 .card {
@@ -137,12 +145,15 @@
 }
 
 .scripture-text {
-  font-family: 'Lora', serif;
-  @apply text-lg leading-relaxed;
+  font-family: 'Crimson Pro', serif;
+  @apply text-xl leading-relaxed tracking-wide font-medium;
+  @apply text-navy-900 dark:text-cream-50;
 }
 
 /* Custom Gradients */
 .gradient-heading {
+  font-family: 'Inter', sans-serif;
+  @apply font-bold;
   @apply bg-clip-text text-transparent;
   background-image: linear-gradient(to right, rgb(18 70 126), rgb(50 108 68));
 }
@@ -152,26 +163,34 @@
 }
 
 .gradient-card {
-  @apply bg-gradient-to-br from-background to-cream-100/50;
+  background-image: linear-gradient(to bottom right, rgb(255 253 248), rgb(254 247 233));
+  @apply shadow-md hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1;
+  @apply border border-cream-200/50;
 }
 
 .dark .gradient-card {
   background-image: linear-gradient(to bottom right, rgb(6 23 42), rgb(12 46 84));
+  @apply border-navy-700/50 hover:border-navy-600/50;
+  @apply shadow-lg shadow-navy-900/20 hover:shadow-xl hover:shadow-navy-900/30;
 }
 
 /* Button Styles */
 .btn-primary {
-  background-image: linear-gradient(to right, rgb(24 93 168), rgb(18 70 126));
-  @apply text-cream-50 hover:brightness-90 transition-all;
+  @apply h-14 px-8 rounded-xl;
+  @apply text-base font-medium;
+  background-image: linear-gradient(to right, rgb(18 70 126), rgb(24 93 168));
+  @apply shadow-md hover:shadow-lg transition-all duration-300;
+  @apply text-cream-50 hover:brightness-110;
+  @apply flex items-center justify-center gap-2;
 }
 
 .dark .btn-primary {
   background-image: linear-gradient(to right, rgb(254 247 233), rgb(253 241 218));
-  @apply text-navy-900;
+  @apply text-navy-900 shadow-navy-900/20;
 }
 
 .btn-secondary {
-  @apply bg-sage-100 text-sage-900 hover:bg-sage-200 transition-colors;
+  @apply bg-sage-200 text-sage-900 hover:bg-sage-300 transition-colors;
 }
 
 .dark .btn-secondary {
@@ -1120,6 +1139,179 @@ li.card-item:nth-child(1) > div:nth-child(1) > p:nth-child(2) {
 
 .animate-shimmer {
   animation: shimmer 2s linear infinite;
+}
+
+/* Update card text styles */
+.card-title {
+  @apply text-navy-800 dark:text-cream-100 font-semibold;
+}
+
+.card-query {
+  @apply text-navy-700 dark:text-cream-200;
+}
+
+/* Hide scrollbar but keep functionality */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* Perspective effect for cards */
+.perspective-container {
+  transform-style: preserve-3d;
+}
+
+.card-wrapper {
+  transform-origin: center center -10px;
+  transition: transform 0.3s ease;
+}
+
+.card-wrapper:not(:hover) {
+  transform: perspective(1000px) rotateX(var(--rotate));
+}
+
+/* Apply rotation based on position */
+.perspective-container:hover .card-wrapper {
+  --rotate: 0deg;
+}
+
+.perspective-container .card-wrapper {
+  --center-offset: calc(50% - (var(--y-position, 0) * 1px));
+  --rotate: calc((var(--y-position, 0) - var(--center-position, 0)) * 0.1deg);
+}
+
+/* Rich gradient animation for the book icon */
+.animate-gradient {
+  position: relative;
+}
+
+.stroke-gradient {
+  animation: multiColorStroke 8s linear infinite;
+}
+
+@keyframes multiColorStroke {
+  0% {
+    stroke: theme('colors.navy.600');
+  }
+  20% {
+    stroke: theme('colors.sage.500');
+  }
+  40% {
+    stroke: theme('colors.navy.400');
+  }
+  60% {
+    stroke: theme('colors.sage.600');
+  }
+  80% {
+    stroke: theme('colors.navy.500');
+  }
+  100% {
+    stroke: theme('colors.navy.600');
+  }
+}
+
+.dark .stroke-gradient {
+  animation: multiColorStrokeDark 8s linear infinite;
+}
+
+@keyframes multiColorStrokeDark {
+  0% {
+    stroke: theme('colors.cream.100');
+  }
+  20% {
+    stroke: theme('colors.cream.200');
+  }
+  40% {
+    stroke: theme('colors.sage.300');
+  }
+  60% {
+    stroke: theme('colors.cream.300');
+  }
+  80% {
+    stroke: theme('colors.sage.200');
+  }
+  100% {
+    stroke: theme('colors.cream.100');
+  }
+}
+
+/* Enhanced shimmer effect */
+.animate-gradient::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.3),
+    transparent
+  );
+  animation: shimmer 3s ease-in-out infinite;
+  filter: blur(4px);
+}
+
+@keyframes shimmer {
+  0% {
+    transform: translateX(-200%) rotate(45deg);
+  }
+  100% {
+    transform: translateX(200%) rotate(45deg);
+  }
+}
+
+/* Dark mode glow colors */
+.dark .animate-glow-1 {
+  --tw-gradient-from: theme('colors.cream.200 / 20%');
+  --tw-gradient-to: theme('colors.cream.400 / 20%');
+}
+
+.dark .animate-glow-2 {
+  --tw-gradient-from: theme('colors.cream.100 / 15%');
+  --tw-gradient-to: theme('colors.cream.300 / 15%');
+}
+
+.dark .animate-glow-3 {
+  --tw-gradient-from: theme('colors.cream.50 / 10%');
+  --tw-gradient-to: theme('colors.cream.200 / 10%');
+}
+
+/* Border animation styles */
+.border-path {
+  stroke-dasharray: 2000;
+  stroke-dashoffset: 2000;
+  animation: drawBorder 3s ease-out forwards, glowPulse 4s ease-in-out infinite;
+}
+
+@keyframes drawBorder {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes glowPulse {
+  0%, 100% {
+    filter: drop-shadow(0 0 2px theme('colors.navy.400'));
+  }
+  50% {
+    filter: drop-shadow(0 0 6px theme('colors.sage.400'));
+  }
+}
+
+/* Dark mode adjustments */
+.dark .border-path {
+  animation: drawBorder 3s ease-out forwards, glowPulseDark 4s ease-in-out infinite;
+}
+
+@keyframes glowPulseDark {
+  0%, 100% {
+    filter: drop-shadow(0 0 2px theme('colors.cream.200'));
+  }
+  50% {
+    filter: drop-shadow(0 0 6px theme('colors.cream.300'));
+  }
 }
 
 
