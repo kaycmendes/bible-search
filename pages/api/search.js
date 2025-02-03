@@ -10,7 +10,7 @@ export default async function handler(req, res) {
       return res.status(500).json({ error: 'API token not configured' });
     }
 
-    console.log('Received query:', query);
+    console.log('Starting search for:', query, 'Version:', version);
 
     const response = await fetch('https://chutes-nvidia-llama-3-1-405b-instruct-fp8.chutes.ai/v1/chat/completions', {
       method: 'POST',
@@ -46,14 +46,27 @@ export default async function handler(req, res) {
     });
 
     if (!response.ok) {
-      console.error('API Error:', response.status, await response.text());
+      console.error('API Error Status:', response.status);
+      console.error('API Error Text:', await response.text());
+      
+      if (response.status === 503) {
+        return res.status(503).json({ 
+          message: 'The Bible search service is temporarily unavailable. Please try again in a few moments.' 
+        });
+      }
+
       return res.status(response.status).json({ 
-        error: `API request failed with status ${response.status}` 
+        message: `API request failed with status ${response.status}` 
       });
     }
 
     const data = await response.json();
-    
+    console.log('API Response:', data);
+
+    if (!data.choices?.[0]?.message?.content) {
+      return res.status(500).json({ message: 'Invalid API response format' });
+    }
+
     // Extract only the JSON part from the response
     const content = data.choices[0].message.content;
     const jsonMatch = content.match(/\{[^]*\}/);
@@ -83,20 +96,20 @@ export default async function handler(req, res) {
         });
       } catch (parseError) {
         console.error('Parse Error:', parseError);
-        res.status(500).json({ 
-          error: 'Failed to parse response',
+        return res.status(500).json({ 
+          message: 'Failed to parse response',
           details: parseError.message 
         });
       }
     } else {
-      res.status(500).json({ 
-        error: 'No valid JSON found in response' 
+      return res.status(500).json({ 
+        message: 'No valid JSON found in response' 
       });
     }
   } catch (error) {
     console.error('Server Error:', error);
-    res.status(500).json({ 
-      error: 'Failed to fetch response',
+    return res.status(500).json({ 
+      message: 'Failed to fetch response',
       details: error.message 
     });
   }
