@@ -11,6 +11,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import Image from "next/image";
 
 const Navbar = () => {
     const { theme, setTheme } = useTheme();
@@ -42,9 +43,11 @@ const Navbar = () => {
                                 <DropdownMenuTrigger asChild>
                                     <Button variant="ghost" size="icon" className="h-9 w-9">
                                         {session.user?.image ? (
-                                            <img
+                                            <Image
                                                 src={session.user.image}
                                                 alt={session.user.name || "User"}
+                                                width={32}
+                                                height={32}
                                                 className="h-6 w-6 rounded-full"
                                             />
                                         ) : (
@@ -109,9 +112,11 @@ const Navbar = () => {
                             <DropdownMenuTrigger asChild>
                                 <Button variant="ghost" size="icon" className="h-9 w-9">
                                     {session.user?.image ? (
-                                        <img
+                                        <Image
                                             src={session.user.image}
                                             alt={session.user.name || "User"}
+                                            width={32}
+                                            height={32}
                                             className="h-6 w-6 rounded-full"
                                         />
                                     ) : (
