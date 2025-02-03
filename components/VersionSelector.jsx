@@ -21,15 +21,18 @@ const VersionSelector = ({ version, onVersionChange, className }) => {
         <SelectTrigger className="w-full h-full border-0 bg-transparent focus:ring-0 hover:bg-white/50 dark:hover:bg-gray-800 dark:text-cream-50">
           <SelectValue 
             placeholder="Select version" 
-            className="dark:text-cream-50 text-base"
+            className="dark:text-cream-50 text-base w-full h-full"
           />
         </SelectTrigger>
-        <SelectContent className="dark:bg-navy-800 dark:border-navy-700">
+        <SelectContent 
+          className="dark:bg-navy-800 dark:border-navy-700"
+          align="center"
+        >
           {versions.map((v) => (
             <SelectItem 
               key={v.value} 
               value={v.value} 
-              className="dark:text-cream-50 dark:hover:bg-navy-700"
+              className="dark:text-cream-50 dark:hover:bg-navy-700 h-12"
             >
               {v.label}
             </SelectItem>
