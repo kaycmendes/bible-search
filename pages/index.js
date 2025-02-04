@@ -4,41 +4,105 @@ import Navbar from './Navbar';
 import Cards from './Cards';
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Search, Loader2, Trash } from "lucide-react";
+import { Search, Loader2 } from "lucide-react";
 import { searchBiblePassage } from '@/utils/api';
 import { toast } from 'react-hot-toast';
 import { useTheme } from "next-themes";
 import VersionSelector from '@/components/VersionSelector';
 import LoginDialog from '@/components/LoginDialog';
 import { useLoginPrompt } from '@/hooks/useLoginPrompt';
+import { useSession } from 'next-auth/react';
 
 const Home = () => {
   const [query, setQuery] = useState('');
-  const [searchResults, setSearchResults] = useState(() => {
-    // Initialize from localStorage if available
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('searchResults');
-      return saved ? JSON.parse(saved) : {};
-    }
-    return {};
-  });
+  const [searchResults, setSearchResults] = useState({});
   const [isLoading, setIsLoading] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [version, setVersion] = useState('KJV');
   const { theme } = useTheme();
   const { showLoginPrompt, setShowLoginPrompt } = useLoginPrompt(searchResults);
+  const { data: session, status } = useSession();
 
   // Handle mounting
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  // Save to localStorage whenever searchResults changes
+  // Load saved cards on mount
   useEffect(() => {
-    if (mounted && typeof window !== 'undefined') {
-      localStorage.setItem('searchResults', JSON.stringify(searchResults));
+    // Always try to load from localStorage first
+    try {
+      const savedResults = localStorage.getItem('searchResults');
+      if (savedResults) {
+        // Convert to array, sort by timestamp (key), and convert back to object
+        const savedCards = JSON.parse(savedResults);
+        const sortedCards = Object.entries(savedCards)
+          .sort(([keyA], [keyB]) => Number(keyA) - Number(keyB))
+          .reduce((acc, [key, value]) => ({
+            ...acc,
+            [key]: value
+          }), {});
+        setSearchResults(sortedCards);
+      }
+    } catch (err) {
+      console.error('Failed to load from localStorage:', err);
+      localStorage.removeItem('searchResults');
     }
-  }, [searchResults, mounted]);
+
+    // Additionally load from Supabase if logged in
+    if (status === 'authenticated' && session) {
+      loadSavedCards();
+      syncLocalCards();
+    }
+  }, [session, status]);
+
+  const loadSavedCards = async () => {
+    try {
+      const response = await fetch('/api/cards');
+      console.log('Loading cards response:', response);
+      if (response.ok) {
+        const cards = await response.json();
+        console.log('Loaded cards:', cards);
+        const cardsObj = {};
+        cards.reverse().forEach(card => {
+          cardsObj[card.id] = {
+            verse: card.verse,
+            verseLocation: card.verse_location,
+            query: card.query,
+            version: card.version
+          };
+        });
+        console.log('Formatted cards:', cardsObj);
+        setSearchResults(cardsObj);
+      }
+    } catch (error) {
+      console.error('Failed to load cards:', error);
+      toast.error('Failed to load saved cards');
+    }
+  };
+
+  const syncLocalCards = async () => {
+    try {
+      const localCards = JSON.parse(localStorage.getItem('searchResults') || '{}');
+      if (Object.keys(localCards).length === 0) return;
+      
+      const response = await fetch('/api/cards', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ cards: localCards })
+      });
+      
+      if (response.ok) {
+        const result = await response.json();
+        if (result.synced > 0) {
+          toast.success(`Synced ${result.synced} cards to cloud`);
+        }
+      }
+    } catch (error) {
+      console.error('Sync failed:', error);
+      toast.error('Failed to sync cards with cloud');
+    }
+  };
 
   const handleSearch = async (searchQuery) => {
     if (!searchQuery?.trim()) {
@@ -55,10 +119,52 @@ const Home = () => {
         throw new Error('No results found');
       }
 
-      setSearchResults(prev => ({
-        ...prev,
-        [Date.now()]: result
-      }));
+      // Format the result object
+      const cardData = {
+        verse: result.verse,
+        verseLocation: result.verseLocation,
+        query: searchQuery,
+        version
+      };
+
+      // Create timestamp for sorting
+      const timestamp = Date.now();
+
+      // Always update localStorage and local state first
+      const newResults = {
+        ...searchResults,
+        [timestamp]: cardData
+      };
+
+      try {
+        localStorage.setItem('searchResults', JSON.stringify(newResults));
+      } catch (err) {
+        console.error('Failed to save to localStorage:', err);
+      }
+      setSearchResults(newResults);
+
+      // Additionally save to database if logged in
+      if (session) {
+        try {
+          const saveResponse = await fetch('/api/cards', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(cardData),
+          });
+
+          if (!saveResponse.ok) {
+            throw new Error('Failed to save to database');
+          }
+
+          const savedCard = await saveResponse.json();
+          console.log('Saved to database:', savedCard);
+        } catch (error) {
+          console.error('Failed to save to database:', error);
+          toast.error('Failed to sync with cloud');
+        }
+      }
       
       setQuery('');
       toast.success('Verse found!');
@@ -66,16 +172,9 @@ const Home = () => {
     } catch (error) {
       console.error('Search failed:', error);
       toast.error(error.message || 'Failed to get response. Please try again.');
-      
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const handleClearHistory = () => {
-    setSearchResults({});
-    localStorage.removeItem('searchResults');
-    toast.success('Search history cleared');
   };
 
   const handleSubmit = async (e) => {
@@ -91,24 +190,46 @@ const Home = () => {
     handleSearch(queryToRefresh);
   };
 
-  const handleDeleteCard = (key) => {
-    setSearchResults(prev => {
-      const newResults = { ...prev };
-      delete newResults[key];
-      
-      // Save to localStorage
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('searchResults', JSON.stringify(newResults));
+  const handleDeleteCard = async (key) => {
+    try {
+      // Delete from database first if logged in
+      if (session) {
+        const response = await fetch(`/api/cards?verse_location=${searchResults[key].verseLocation}`, {
+          method: 'DELETE'
+        });
+        
+        if (!response.ok) {
+          throw new Error('Failed to delete from database');
+        }
       }
+
+      // Always update local state and storage
+      setSearchResults(prev => {
+        const newResults = { ...prev };
+        delete newResults[key];
+        // Sort by timestamp before saving
+        const sortedResults = Object.entries(newResults)
+          .sort(([keyA], [keyB]) => Number(keyA) - Number(keyB))
+          .reduce((acc, [k, v]) => ({
+            ...acc,
+            [k]: v
+          }), {});
+        try {
+          localStorage.setItem('searchResults', JSON.stringify(sortedResults));
+        } catch (err) {
+          console.error('Failed to update localStorage:', err);
+        }
+        return sortedResults;
+      });
       
-      return newResults;
-    });
-    
-    toast.success('Card removed');
+      toast.success('Card removed');
+    } catch (error) {
+      console.error('Delete failed:', error);
+      toast.error('Failed to delete card');
+    }
   };
 
-  // Show loading state while mounting
-  if (!mounted) {
+  if (!mounted || status === 'loading') {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="animate-pulse text-2xl text-primary">Loading...</div>
@@ -224,21 +345,6 @@ const Home = () => {
           </div>
         </div>
 
-        {/* Clear All button */}
-        {Object.keys(searchResults).length > 0 && (
-          <div className="flex justify-end mt-2 mb-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleClearHistory}
-              className="relative z-10 text-muted-foreground hover:text-destructive transition-colors flex items-center gap-2"
-            >
-              <Trash className="h-4 w-4" />
-              Clear All Cards
-            </Button>
-          </div>
-        )}
-
         {/* Cards section - Adjusted height calculation */}
         <div className="h-[calc(100vh-12rem)] sm:h-[calc(100vh-16rem)] overflow-hidden">
           <Cards
@@ -261,4 +367,5 @@ const Home = () => {
 };
 
 export default Home;
+
 
