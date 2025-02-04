@@ -61,10 +61,10 @@ export default async function handler(req, res) {
 
   // DELETE - Remove a card
   if (req.method === 'DELETE') {
-    const { error } = await supabase
+    const { error } = await supabaseAdmin
       .from('cards')
       .delete()
-      .eq('id', req.query.id)
+      .eq('verse_location', req.query.verse_location)
       .eq('user_email', session.user.email)
       
     if (error) {
