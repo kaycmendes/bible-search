@@ -1,7 +1,13 @@
 {
   "functions": {
-    "api/**/*.js": {
+    "pages/api/**/*": {
       "maxDuration": 60
     }
-  }
+  },
+  "routes": [
+    {
+      "source": "/api/:path*",
+      "destination": "/api/:path*"
+    }
+  ]
 } 
