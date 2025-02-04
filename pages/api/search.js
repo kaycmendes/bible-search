@@ -12,7 +12,7 @@ export default async function handler(req, res) {
 
     console.log('Starting search for:', query, 'Version:', version);
 
-    const response = await fetch('https://chutes-qwen-qwen2-5-72b-instruct.chutes.ai/v1/chat/completions', {
+    const response = await fetch('https://chutes-hugging-quants-meta-llama-3-1-70b-instruct-awq-int4.chutes.ai/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${process.env.NEXT_PUBLIC_CHUTES_API_TOKEN}`,
@@ -20,14 +20,14 @@ export default async function handler(req, res) {
         'Accept': 'application/json'
       },
       body: JSON.stringify({
-        model: "Qwen/Qwen2.5-72B-Instruct",
+        model: "hugging-quants/Meta-Llama-3.1-70B-Instruct-AWQ-INT4",
         messages: [
           {
             role: "system",
             content: `You are a Bible expert, you asnwer questions about anything in a biblical context, giving clarity and adressing modern day questions with a biblical perspective. When providing Bible verses in ${version} version, follow these rules:
             1. Never repeat the same verse that was just given (last verse was: "${lastVerse}")
             2. Find a completely different passage that addresses the same topic
-            3. Stay true to the bible and only provide verses that are in the bible ONLY, and that are relevant to the question from  a christian perspective
+            3. Stay true to the bible and only provide verses that are in the bible ONLY, and that are relevant to the question from a christian perspective, defending and representing it with scripture
             4. Look in different books of the Bible for variety
             5. ${version === 'ACF' ? 'Provide the verse in Portuguese from Almeida Corrigida Fiel translation' : 'Provide the verse in English'}
             Return the response in this exact JSON format: {"verse": "verse text", "location": "book chapter:verse"}`
