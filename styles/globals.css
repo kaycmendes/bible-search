@@ -1314,4 +1314,32 @@ li.card-item:nth-child(1) > div:nth-child(1) > p:nth-child(2) {
   }
 }
 
+/* Add these styles to your existing globals.css */
+
+#delete-dialog-overlay {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 9999 !important;
+  background: rgba(0, 0, 0, 0.8) !important;
+  backdrop-filter: blur(4px) !important;
+}
+
+#delete-dialog-content {
+  position: fixed !important;
+  z-index: 10000 !important;
+  top: 50% !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%) !important;
+  margin: 1.5rem auto !important;
+  padding: 2rem !important;
+  max-height: calc(100vh - 4rem) !important;
+  overflow-y: auto !important;
+}
+
+/* Ensure dialog is above everything else */
+[role="alertdialog"] {
+  position: relative;
+  z-index: 10000 !important;
+}
+
 
