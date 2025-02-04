@@ -6,7 +6,8 @@ const nextConfig = {
     domains: [
       'lh3.googleusercontent.com',  // For Google profile pictures
       'avatars.githubusercontent.com', // For GitHub avatars (if you add GitHub auth)
-      'localhost'
+      'localhost',
+      'netlify.app'  // Add this
     ],
     remotePatterns: [
       {
