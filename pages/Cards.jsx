@@ -1,13 +1,14 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Copy, Share2, RefreshCw, Twitter, Trash2 } from "lucide-react";
+import { Copy, Share2, RefreshCw, Twitter, Trash2, Download } from "lucide-react";
 import { toast } from 'react-toastify';
 import { motion } from "framer-motion";
 import { Skeleton } from "@/components/ui/skeleton";
 import LoadingText from "@/components/LoadingText";
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import Footer from '@/components/Footer';
 import DeleteConfirmDialog from '@/components/DeleteConfirmDialog';
+import { useScreenshot } from 'use-react-screenshot';
 
 const Cards = ({ results, isLoading, onRefresh, version, onDelete }) => {
   const [showFooter, setShowFooter] = useState(false);
@@ -127,6 +128,8 @@ const LoadingCard = () => {
 
 const ScriptureCard = ({ verse, verseLocation, query, onRefresh, onDelete, version, id }) => {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const ref = useRef(null);
+  const [image, takeScreenshot] = useScreenshot();
 
   const handleCopy = () => {
     navigator.clipboard.writeText(`${verse} - ${verseLocation}`);
@@ -137,6 +140,38 @@ const ScriptureCard = ({ verse, verseLocation, query, onRefresh, onDelete, versi
     const shareText = encodeURIComponent(`"${verse}" - ${verseLocation}`);
     window.open(`https://twitter.com/intent/tweet?text=${shareText}`, '_blank');
   };
+
+  const handleDownload = useCallback(async () => {
+    // Create a clone of the card element to modify for screenshot
+    const element = ref.current;
+    const clone = element.cloneNode(true);
+    clone.style.borderRadius = '12px';
+    clone.style.overflow = 'hidden';
+    clone.style.backgroundColor = '#0d3e6f'; // Add navy background color
+    
+    // Make text white for better contrast
+    const textElements = clone.querySelectorAll('p, span');
+    textElements.forEach(el => {
+      el.style.color = 'white';
+    });
+    
+    // Temporarily append clone to document
+    document.body.appendChild(clone);
+    
+    // Take screenshot of clone
+    const screenshot = await takeScreenshot(clone);
+    
+    // Remove clone
+    document.body.removeChild(clone);
+    
+    // Download the screenshot
+    const link = document.createElement('a');
+    link.href = screenshot;
+    link.download = `bible-verse-${Date.now()}.png`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }, [takeScreenshot]);
 
   const handleRefresh = async () => {
     try {
@@ -160,7 +195,7 @@ const ScriptureCard = ({ verse, verseLocation, query, onRefresh, onDelete, versi
 
   return (
     <>
-      <Card className="w-full gradient-card">
+      <Card className="w-full gradient-card" ref={ref}>
         <CardHeader className="space-y-1 sm:space-y-2 p-4 sm:p-6">
           <div className="flex justify-between items-center">
             <CardTitle className="text-sm sm:text-base font-medium card-title">
@@ -204,6 +239,15 @@ const ScriptureCard = ({ verse, verseLocation, query, onRefresh, onDelete, versi
               >
                 <Twitter className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-2" />
                 Tweet
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={handleDownload}
+                className="flex-1 sm:flex-initial h-8 sm:h-10"
+              >
+                <Download className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-2" />
+                Save
               </Button>
             </div>
             <Button 
