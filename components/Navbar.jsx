@@ -3,7 +3,7 @@
 import { useTheme } from "next-themes";
 import { useSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
-import { Sun, Moon, User, Download } from "lucide-react";
+import { Sun, Moon, User, Download, Chrome } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { signIn } from "next-auth/react";
 import { UserNav } from "@/components/user-nav";
@@ -54,7 +54,7 @@ const Navbar = ({ className }) => {
           onClick={() => setShowLogin(true)}
           className="rounded-full"
         >
-          <User className="h-5 w-5" />
+          <Chrome className="h-5 w-5" />
         </Button>
       )}
 

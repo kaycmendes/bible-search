@@ -1,10 +1,13 @@
 //make a next js component?
 import Link from 'next/link';
 import { Button } from "@/components/ui/button";
-import { BookOpen, Sun, Moon, Menu, User } from 'lucide-react';
+import { Sun, Moon, User} from 'lucide-react';
 import { useTheme } from "next-themes";
 import { useEffect, useState } from 'react';
 import { useSession, signIn, signOut } from "next-auth/react";
+import { FcGoogle } from 'react-icons/fc';
+
+
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -152,7 +155,7 @@ const Navbar = () => {
                             onClick={() => signIn("google")}
                             className="gap-2"
                         >
-                            <User className="h-4 w-4" />
+                            <FcGoogle className="h-4 w-4" />
                             Sign in
                         </Button>
                     )}
