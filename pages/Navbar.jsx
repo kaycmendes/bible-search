@@ -27,38 +27,84 @@ const Navbar = () => {
     useEffect(() => {
         setMounted(true);
 
-        // Handle PWA install prompt
+        // Check if the app is already installed
+        const isInstalled = () => {
+            // Check if in standalone mode (PWA)
+            if (window.matchMedia('(display-mode: standalone)').matches) return true;
+            // Check if on iOS and in standalone mode
+            if (navigator.standalone) return true;
+            // Check if installed on Chrome
+            if (window.navigator.userAgent.includes('Chrome') && window.chrome?.app?.isInstalled) return true;
+            return false;
+        };
+
+        // Check if the app can be installed
+        const checkInstallable = async () => {
+            // Check if the browser supports PWA
+            if ('serviceWorker' in navigator && window.isSecureContext) {
+                try {
+                    // Register service worker if not already registered
+                    const registration = await navigator.serviceWorker.ready;
+                    if (registration.active) {
+                        // Only show install button if not already installed
+                        if (!isInstalled()) {
+                            setShowInstallButton(true);
+                        }
+                    }
+                } catch (error) {
+                    console.error('Service Worker registration failed:', error);
+                }
+            }
+        };
+
+        // Listen for the beforeinstallprompt event
         window.addEventListener('beforeinstallprompt', (e) => {
-            // Prevent Chrome 67 and earlier from automatically showing the prompt
             e.preventDefault();
-            // Stash the event so it can be triggered later
             setDeferredPrompt(e);
-            // Show the install button
             setShowInstallButton(true);
         });
 
-        // Hide button if PWA is already installed
-        if (window.matchMedia('(display-mode: standalone)').matches) {
+        // Check if installable on component mount
+        checkInstallable();
+
+        // Hide button if app is launched in standalone mode
+        if (isInstalled()) {
             setShowInstallButton(false);
         }
+
+        // Cleanup
+        return () => {
+            window.removeEventListener('beforeinstallprompt', () => {});
+        };
     }, []);
 
     const handleInstallClick = async () => {
-        if (!deferredPrompt) return;
-
-        // Show the install prompt
-        deferredPrompt.prompt();
-
-        // Wait for the user to respond to the prompt
-        const { outcome } = await deferredPrompt.userChoice;
-        
-        if (outcome === 'accepted') {
-            console.log('User accepted the install prompt');
-            setShowInstallButton(false);
+        if (!deferredPrompt) {
+            // Fallback for browsers that don't support beforeinstallprompt
+            alert('To install the app: \n\n' +
+                  'On iOS: Tap the share button and select "Add to Home Screen"\n' +
+                  'On Android: Tap the menu button and select "Install App"');
+            return;
         }
 
-        // Clear the saved prompt since it can't be used again
-        setDeferredPrompt(null);
+        try {
+            // Show the install prompt
+            deferredPrompt.prompt();
+            // Wait for the user to respond
+            const { outcome } = await deferredPrompt.userChoice;
+            if (outcome === 'accepted') {
+                console.log('User accepted the install prompt');
+                setShowInstallButton(false);
+            }
+            // Clear the saved prompt
+            setDeferredPrompt(null);
+        } catch (error) {
+            console.error('Install prompt failed:', error);
+            // Fallback
+            alert('To install the app: \n\n' +
+                  'On iOS: Tap the share button and select "Add to Home Screen"\n' +
+                  'On Android: Tap the menu button and select "Install App"');
+        }
     };
 
     if (!mounted) {
