@@ -1086,7 +1086,7 @@ li.card-item:nth-child(1) > div:nth-child(1) > p:nth-child(2) {
 
 /* Inline #1 | http://localhost:3000/ */
 .card-item .arrow {
-  display: none;
+ display: none;
 }
 
 .show-div-animation {
