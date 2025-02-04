@@ -32,9 +32,9 @@
     {
       "source": "/:path*",
       "headers": [
-        {
+        {   
           "key": "Access-Control-Allow-Origin",
-          "value": "https://aiaskthebible.vercel.app https://lh3.googleusercontent.com"
+          "value": "https://aiaskthebible.vercel.app https://lh3.googleusercontent.com https://lh3.googleusercontent.com"  
         }
       ]
     }

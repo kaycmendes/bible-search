@@ -8,6 +8,9 @@ export const searchBiblePassage = async (query, version) => {
 
     const lastVerse = Array.from(previousResponses).pop();
     
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 20000);
+
     const response = await fetch('/api/search', {
       method: 'POST',
       headers: {
@@ -18,14 +21,19 @@ export const searchBiblePassage = async (query, version) => {
         version,
         lastVerse,
       }),
+      signal: controller.signal,
     });
 
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.message || 'Failed to fetch response');
-    }
+    clearTimeout(timeoutId);
 
     const data = await response.json();
+
+    if (!response.ok) {
+      if (data.shouldRetry) {
+        throw new Error('Service temporarily unavailable. Please try again.');
+      }
+      throw new Error(data.error || 'Failed to fetch response');
+    }
     
     if (!data || !data.verseLocation) {
       throw new Error('Invalid response format');
@@ -37,9 +45,15 @@ export const searchBiblePassage = async (query, version) => {
       previousResponses = new Set(Array.from(previousResponses).slice(-5));
     }
 
+    // Log which model was used
+    console.log('Response from model:', data.modelUsed);
+
     return data;
   } catch (error) {
     console.error('Search error:', error);
+    if (error.name === 'AbortError') {
+      throw new Error('Request timed out. Please try again.');
+    }
     throw error;
   }
 }; 

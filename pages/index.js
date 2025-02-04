@@ -12,7 +12,6 @@ import VersionSelector from '@/components/VersionSelector';
 import LoginDialog from '@/components/LoginDialog';
 import { useLoginPrompt } from '@/hooks/useLoginPrompt';
 import { useSession } from 'next-auth/react';
-import { ClipLoader } from 'react-spinners';
 
 const Home = () => {
   const [query, setQuery] = useState('');
@@ -344,15 +343,6 @@ const Home = () => {
               )}
             </Button>
           </div>
-        </div>
-
-        {/* Three dots and loading spinner container */}
-        <div className="relative w-full flex flex-col items-center">
-          {/* Loading spinner - positioned below dots */}
-          {isLoading && (
-            <div className="mt-4">
-            </div>
-          )}
         </div>
 
         {/* Cards section - Adjusted height calculation */}
