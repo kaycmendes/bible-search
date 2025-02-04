@@ -3,6 +3,7 @@
   publish = ".next"
 
 [build.environment]
+  NODE_VERSION = "18.17.0"
   NEXT_PUBLIC_CHUTES_API_TOKEN = "your-token"
   NEXTAUTH_URL = "your-production-url"
   NEXTAUTH_SECRET = "your-secret"
