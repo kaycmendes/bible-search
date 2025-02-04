@@ -1,7 +1,7 @@
 //make a next js component?
 import Link from 'next/link';
 import { Button } from "@/components/ui/button";
-import { Sun, Moon, User} from 'lucide-react';
+import { Sun, Moon, User, Download } from 'lucide-react';
 import { useTheme } from "next-themes";
 import { useEffect, useState } from 'react';
 import { useSession, signIn, signOut } from "next-auth/react";
@@ -20,11 +20,46 @@ const Navbar = () => {
     const { theme, setTheme } = useTheme();
     const { data: session, status } = useSession();
     const [mounted, setMounted] = useState(false);
+    const [deferredPrompt, setDeferredPrompt] = useState(null);
+    const [showInstallButton, setShowInstallButton] = useState(false);
 
     // Wait until mounted to avoid hydration mismatch
     useEffect(() => {
         setMounted(true);
+
+        // Handle PWA install prompt
+        window.addEventListener('beforeinstallprompt', (e) => {
+            // Prevent Chrome 67 and earlier from automatically showing the prompt
+            e.preventDefault();
+            // Stash the event so it can be triggered later
+            setDeferredPrompt(e);
+            // Show the install button
+            setShowInstallButton(true);
+        });
+
+        // Hide button if PWA is already installed
+        if (window.matchMedia('(display-mode: standalone)').matches) {
+            setShowInstallButton(false);
+        }
     }, []);
+
+    const handleInstallClick = async () => {
+        if (!deferredPrompt) return;
+
+        // Show the install prompt
+        deferredPrompt.prompt();
+
+        // Wait for the user to respond to the prompt
+        const { outcome } = await deferredPrompt.userChoice;
+        
+        if (outcome === 'accepted') {
+            console.log('User accepted the install prompt');
+            setShowInstallButton(false);
+        }
+
+        // Clear the saved prompt since it can't be used again
+        setDeferredPrompt(null);
+    };
 
     if (!mounted) {
         return (
@@ -34,6 +69,19 @@ const Navbar = () => {
                         Ask the Bible
                     </Link>
                     <div className="flex items-center gap-2">
+                        {/* Install Button - show only if available */}
+                        {showInstallButton && (
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={handleInstallClick}
+                                className="gap-2"
+                            >
+                                <Download className="h-4 w-4" />
+                                Install App
+                            </Button>
+                        )}
+
                         <Button variant="ghost" size="icon" onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')} className="h-9 w-9">
                             {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
                         </Button>
@@ -86,7 +134,7 @@ const Navbar = () => {
                                 onClick={() => signIn("google")}
                                 className="gap-2"
                             >
-                                <User className="h-4 w-4" />
+                                <FcGoogle className="h-4 w-4" />
                                 Sign in
                             </Button>
                         )}
@@ -103,6 +151,19 @@ const Navbar = () => {
                     Ask the Bible
                 </Link>
                 <div className="flex items-center gap-2">
+                    {/* Install Button - show only if available */}
+                    {showInstallButton && (
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={handleInstallClick}
+                            className="gap-2"
+                        >
+                            <Download className="h-4 w-4" />
+                            Install App
+                        </Button>
+                    )}
+
                     <Button variant="ghost" size="icon" onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')} className="h-9 w-9">
                         {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
                     </Button>
