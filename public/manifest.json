@@ -1,21 +1,41 @@
 {
-  "name": "Ask the Bible",
-  "short_name": "BibleApp",
-  "description": "Bible study companion app",
+  "name": "Ask The Bible",
+  "short_name": "Bible AI",
+  "description": "AI-powered Bible verse search",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
-  "theme_color": "#1e293b",
+  "theme_color": "#000000",
   "icons": [
     {
-      "src": "/spaicon.png",
+      "src": "/icon-192x192.png",
       "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     },
     {
-      "src": "/spaicon.png",
+      "src": "/icon-512x512.png",
       "sizes": "512x512",
       "type": "image/png"
     }
-  ]
+  ],
+  "chrome_url_overrides": {
+    "newtab": "index.html"
+  },
+  "permissions": ["storage"],
+  "manifest_version": 2,
+  "version": "1.0",
+  "browser_action": {
+    "default_icon": {
+      "16": "/icon-16x16",
+      "32": "/icon-32x32",
+      "36": "/icon-36x36",
+      "48": "/icon-48x48",
+      "72": "/icon-72x72",  
+      "96": "/icon-96x96",
+      "144": "/icon-144x144",
+      "192": "/icon-192x192",
+      "512": "/icon-512x512"
+    }
+  }
 }
