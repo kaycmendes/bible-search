@@ -1,13 +1,47 @@
 {
+  "version": 2,
   "functions": {
-    "pages/api/**/*": {
+    "pages/api/*.js": {
       "maxDuration": 60
     }
   },
-  "routes": [
-    {
+  "rewrites": [
+    { 
       "source": "/api/:path*",
       "destination": "/api/:path*"
     }
-  ]
+  ],
+  "headers": [
+    {
+      "source": "/api/(.*)",
+      "headers": [
+        { 
+          "key": "Access-Control-Allow-Origin", 
+          "value": "https://aiaskthebible.vercel.app"
+        },
+        {
+          "key": "Access-Control-Allow-Methods",
+          "value": "GET, POST, PUT, DELETE, OPTIONS"
+        },
+        {
+          "key": "Access-Control-Allow-Headers",
+          "value": "X-Requested-With, Content-Type, Authorization"
+        }
+      ]
+    },
+    {
+      "source": "/:path*",
+      "headers": [
+        {
+          "key": "Access-Control-Allow-Origin",
+          "value": "https://aiaskthebible.vercel.app https://lh3.googleusercontent.com"
+        }
+      ]
+    }
+  ],
+  "images": {
+    "domains": [
+      "lh3.googleusercontent.com"
+    ]
+  }
 } 
