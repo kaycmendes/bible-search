@@ -48,9 +48,9 @@ const YourComponent = () => {
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-              placeholder="Search for verses..."
+              placeholder="Ask the Bible..."
               className="w-full px-4 py-3 rounded-l-lg border-0 focus:outline-none focus:ring-0 bg-transparent placeholder-gray-500"
-              aria-label="Search verses"
+              aria-label="Ask the Bible"
             />
             <div className="h-6 w-px bg-gray-200 mx-1"></div>
             <button

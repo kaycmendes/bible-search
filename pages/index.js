@@ -310,7 +310,7 @@ const Home = () => {
             <div className="flex-1 flex items-stretch">
               <Input
                 type="text"
-                placeholder="Search for verses..."
+                placeholder="Ask the Bible..."
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleSearch(query)}
@@ -338,7 +338,7 @@ const Home = () => {
               ) : (
                 <>
                   <Search className="h-5 w-5 sm:h-6 sm:w-6" />
-                  <span className="text-base sm:text-lg font-medium">Search</span>
+                  <span className="text-base sm:text-lg font-medium">Ask</span>
                 </>
               )}
             </Button>

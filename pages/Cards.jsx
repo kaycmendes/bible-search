@@ -216,7 +216,7 @@ const ScriptureCard = ({ verse, verseLocation, query, onRefresh, onDelete, versi
               </Button>
             </div>
           </div>
-          <p className="text-xs sm:text-sm card-query italic">Query: {query}</p>
+          <p className="text-xs sm:text-sm card-query italic">Question: {query}</p>
         </CardHeader>
         <CardContent className="space-y-4 sm:space-y-6 p-4 sm:p-6">
           <p className="scripture-text text-base sm:text-xl">{verse}</p>
