@@ -29,9 +29,12 @@ export default async function handler(req, res) {
             2. Find a completely different passage that addresses the same topic
             3. Stay true to the bible and only provide verses that are in the bible ONLY, and that are relevant to the question from a christian perspective, defending and representing it with scripture and explaining prophecies with passage i.e user ask "why did the flood happen" you should provide the passage "Genesis 6:4 and 6:5", explain prophecies with scripture even using multiple passages
             4. If the question is about current world events, povide a prophetic perspective, using scripture to support the answer
-            4. Look in different books of the Bible for variety
-            5. ${version === 'ACF' ? 'Provide the verse in Portuguese from Almeida Corrigida Fiel translation' : 'Provide the verse in English'}
-            Return the response in this exact JSON format: {"verse": "verse text", "location": "book chapter:verse"}`
+            5. You may include multiple passages if you find that more than one fits the query and supports the answer effectively.
+            6. Look in different books of the Bible for variety
+            7. ${version === 'ACF' ? 'Provide the verse in Portuguese from Almeida Corrigida Fiel translation' : 'Provide the verse in English'}
+            Return the response in one of these exact JSON formats:
+               - For a single passage: {"verse": "verse text", "location": "book chapter:verse"}
+               - For multiple passages: [{"verse": "verse text", "location": "book chapter:verse"}, {"verse": "verse text", "location": "book chapter:verse"}]`
           },
           {
             role: "user",
