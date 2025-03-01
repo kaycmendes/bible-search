@@ -12,6 +12,7 @@ import VersionSelector from '@/components/VersionSelector';
 import LoginDialog from '@/components/LoginDialog';
 import { useLoginPrompt } from '@/hooks/useLoginPrompt';
 import { useSession } from 'next-auth/react';
+import LandingPage from '@/components/LandingPage';
 
 const Home = () => {
   const [query, setQuery] = useState('');
@@ -20,7 +21,7 @@ const Home = () => {
   const [mounted, setMounted] = useState(false);
   const [version, setVersion] = useState('KJV');
   const { theme } = useTheme();
-  const { showLoginPrompt, setShowLoginPrompt } = useLoginPrompt(searchResults);
+  const { showLoginPrompt, setShowLoginPrompt, requireLogin, isAuthenticated } = useLoginPrompt();
   const { data: session, status } = useSession();
 
   // Handle mounting
@@ -28,33 +29,43 @@ const Home = () => {
     setMounted(true);
   }, []);
 
-  // Load saved cards on mount
+  // Load saved cards on mount and clear them when user logs out
   useEffect(() => {
-    // Always try to load from localStorage first
-    try {
-      const savedResults = localStorage.getItem('searchResults');
-      if (savedResults) {
-        // Convert to array, sort by timestamp (key), and convert back to object
-        const savedCards = JSON.parse(savedResults);
-        const sortedCards = Object.entries(savedCards)
-          .sort(([keyA], [keyB]) => Number(keyA) - Number(keyB))
-          .reduce((acc, [key, value]) => ({
-            ...acc,
-            [key]: value
-          }), {});
-        setSearchResults(sortedCards);
+    // Always check session status first
+    if (status === 'unauthenticated') {
+      // Clear search results from state when user is not authenticated
+      setSearchResults({});
+      console.log('Cleared search results from state due to unauthenticated status');
+      return;
+    }
+    
+    // Load from localStorage only if authenticated
+    if (status === 'authenticated') {
+      try {
+        const savedResults = localStorage.getItem('searchResults');
+        if (savedResults) {
+          // Convert to array, sort by timestamp (key), and convert back to object
+          const savedCards = JSON.parse(savedResults);
+          const sortedCards = Object.entries(savedCards)
+            .sort(([keyA], [keyB]) => Number(keyA) - Number(keyB))
+            .reduce((acc, [key, value]) => ({
+              ...acc,
+              [key]: value
+            }), {});
+          setSearchResults(sortedCards);
+        }
+      } catch (err) {
+        console.error('Failed to load from localStorage:', err);
+        localStorage.removeItem('searchResults');
       }
-    } catch (err) {
-      console.error('Failed to load from localStorage:', err);
-      localStorage.removeItem('searchResults');
-    }
 
-    // Additionally load from Supabase if logged in
-    if (status === 'authenticated' && session) {
-      loadSavedCards();
-      syncLocalCards();
+      // Additionally load from Supabase if logged in
+      if (session) {
+        loadSavedCards();
+        syncLocalCards();
+      }
     }
-  }, [session, status]);
+  }, [session, status]); // Depend on session and status changes
 
   const loadSavedCards = async () => {
     try {
@@ -77,7 +88,10 @@ const Home = () => {
       }
     } catch (error) {
       console.error('Failed to load cards:', error);
-      toast.error('Failed to load saved cards');
+      toast('Failed to load saved cards', {
+        icon: '❌',
+        duration: 3000
+      });
     }
   };
 
@@ -95,27 +109,51 @@ const Home = () => {
       if (response.ok) {
         const result = await response.json();
         if (result.synced > 0) {
-          toast.success(`Synced ${result.synced} cards to cloud`);
+          toast(`Synced ${result.synced} cards to cloud`, {
+            icon: '✅',
+            duration: 3000
+          });
         }
       }
     } catch (error) {
       console.error('Sync failed:', error);
-      toast.error('Failed to sync cards with cloud');
+      toast('Failed to sync cards with cloud', {
+        icon: '❌',
+        duration: 3000
+      });
     }
   };
 
   const handleSearch = async (searchQuery) => {
+    console.log(`handleSearch called with query: "${searchQuery}"`);
+    
     if (!searchQuery?.trim()) {
-      toast.error('Please enter a search query');
+      console.log('Empty search query, returning');
+      toast('Please enter a search query', {
+        icon: '❌',
+        duration: 3000
+      });
+      return;
+    }
+
+    // Check if user is logged in before proceeding
+    console.log(`Checking authentication: isAuthenticated=${isAuthenticated}`);
+    if (!requireLogin()) {
+      // If not logged in, the login dialog will be shown by the hook
+      console.warn('User not logged in, showing login dialog');
       return;
     }
 
     setIsLoading(true);
+    console.log('Starting Bible passage search');
     
     try {
+      console.log(`Calling searchBiblePassage API with query="${searchQuery}", version="${version}"`);
       const result = await searchBiblePassage(searchQuery, version);
+      console.log('Search result:', result);
       
       if (!result) {
+        console.warn('No results found for query');
         throw new Error('No results found');
       }
 
@@ -126,26 +164,42 @@ const Home = () => {
         query: searchQuery,
         version
       };
+      console.log('Card data prepared:', cardData);
 
       // Create timestamp for sorting
       const timestamp = Date.now();
 
-      // Always update localStorage and local state first
-      const newResults = {
-        ...searchResults,
-        [timestamp]: cardData
-      };
+      // Only update localStorage if the user is authenticated
+      if (status === 'authenticated') {
+        const newResults = {
+          ...searchResults,
+          [timestamp]: cardData
+        };
 
-      try {
-        localStorage.setItem('searchResults', JSON.stringify(newResults));
-      } catch (err) {
-        console.error('Failed to save to localStorage:', err);
+        try {
+          console.log('Saving to localStorage');
+          localStorage.setItem('searchResults', JSON.stringify(newResults));
+          console.log('Successfully saved to localStorage');
+        } catch (err) {
+          console.error('Failed to save to localStorage:', err);
+        }
+        
+        console.log('Updating state with new results');
+        setSearchResults(newResults);
+      } else {
+        console.log('User not authenticated, skipping localStorage save');
+        // Still update the state for the current session
+        setSearchResults(prev => ({
+          ...prev,
+          [timestamp]: cardData
+        }));
       }
-      setSearchResults(newResults);
 
       // Additionally save to database if logged in
       if (session) {
+        console.log('User is logged in, attempting to save to database');
         try {
+          console.log('Making POST request to /api/cards');
           const saveResponse = await fetch('/api/cards', {
             method: 'POST',
             headers: {
@@ -154,40 +208,149 @@ const Home = () => {
             body: JSON.stringify(cardData),
           });
 
+          console.log('API response status:', saveResponse.status);
+          
           if (!saveResponse.ok) {
-            throw new Error('Failed to save to database');
+            const errorData = await saveResponse.json();
+            console.error('Database save error details:', errorData);
+            throw new Error(errorData.error || 'Failed to save to database');
           }
 
           const savedCard = await saveResponse.json();
-          console.log('Saved to database:', savedCard);
+          console.log('Successfully saved to database:', savedCard);
         } catch (error) {
           console.error('Failed to save to database:', error);
-          toast.error('Failed to sync with cloud');
+          // Don't show toast error for database issues when local storage is working
+          // This prevents user confusion as the card is still functional locally
+          console.warn('Card saved locally but failed to sync with cloud');
         }
+      } else {
+        console.log('User not logged in, skipping database save');
       }
-      
+
       setQuery('');
-      toast.success('Verse found!');
+      toast('Verse found!', {
+        icon: '✅',
+        duration: 3000
+      });
+      console.log('Search completed successfully');
       
     } catch (error) {
-      console.error('Search failed:', error);
-      toast.error(error.message || 'Failed to get response. Please try again.');
+      console.error('Search failed with error:', error);
+      toast(error.message || 'Failed to get response. Please try again.', {
+        icon: '❌',
+        duration: 3000
+      });
     } finally {
       setIsLoading(false);
+      console.log('Search process completed (success or failure)');
     }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!query.trim()) {
-      toast.error('Please enter a question');
+      toast('Please enter a question', {
+        icon: '❌',
+        duration: 3000
+      });
       return;
     }
     handleSearch(query);
   };
 
   const handleRefresh = async (queryToRefresh) => {
-    handleSearch(queryToRefresh);
+    console.log(`handleRefresh called with query: "${queryToRefresh}"`);
+    
+    // Set loading state immediately
+    setIsLoading(true);
+    
+    try {
+      // Track authentication status before proceeding
+      console.log(`User authentication status: ${status}, session exists: ${!!session}`);
+      
+      // For existing cards, we can bypass the login prompt since the user already has cards
+      // Skip the requireLogin check and call searchBiblePassage directly
+      
+      console.log(`Direct search for query: "${queryToRefresh}", version: "${version}"`);
+      
+      try {
+        const result = await searchBiblePassage(queryToRefresh, version);
+        console.log('Refresh search result:', result);
+        
+        if (!result) {
+          console.warn('No results found for refresh query');
+          throw new Error('No results found');
+        }
+
+        // Format and save the card data as in the original handleSearch function
+        const cardData = {
+          verse: result.verse,
+          verseLocation: result.verseLocation,
+          query: queryToRefresh,
+          version
+        };
+        
+        // Create timestamp for sorting
+        const timestamp = Date.now();
+        
+        // Only update localStorage if user is authenticated
+        if (status === 'authenticated') {
+          // Update localStorage and state
+          const newResults = {
+            ...searchResults,
+            [timestamp]: cardData
+          };
+          
+          try {
+            localStorage.setItem('searchResults', JSON.stringify(newResults));
+            console.log('Saved refresh result to localStorage');
+          } catch (storageErr) {
+            console.error('Failed to save to localStorage:', storageErr);
+          }
+          
+          setSearchResults(newResults);
+        } else {
+          console.log('User not authenticated, skipping localStorage save for refresh');
+          // Still update the state for the current session
+          setSearchResults(prev => ({
+            ...prev,
+            [timestamp]: cardData
+          }));
+        }
+        
+        // Save to database if logged in
+        if (session) {
+          try {
+            const saveResponse = await fetch('/api/cards', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(cardData),
+            });
+            
+            if (!saveResponse.ok) {
+              const errorData = await saveResponse.json();
+              console.error('Database save error during refresh:', errorData);
+              // Don't throw here, we still have the local card
+            }
+          } catch (dbError) {
+            console.error('Failed to save refresh to database:', dbError);
+            // Don't throw here either
+          }
+        }
+        
+        console.log(`handleSearch completed for refresh query: "${queryToRefresh}"`);
+      } catch (searchError) {
+        console.error(`Search error during refresh: ${searchError.message}`);
+        throw searchError; // Propagate error back to the caller
+      }
+    } catch (error) {
+      console.error(`Error in handleRefresh for query "${queryToRefresh}":`, error);
+      throw error; // Propagate error back to the caller
+    } finally {
+      setIsLoading(false);
+      console.log('Refresh process completed (success or failure)');
+    }
   };
 
   const handleDeleteCard = async (key) => {
@@ -203,29 +366,44 @@ const Home = () => {
         }
       }
 
-      // Always update local state and storage
+      // Update local state
       setSearchResults(prev => {
         const newResults = { ...prev };
         delete newResults[key];
-        // Sort by timestamp before saving
-        const sortedResults = Object.entries(newResults)
-          .sort(([keyA], [keyB]) => Number(keyA) - Number(keyB))
-          .reduce((acc, [k, v]) => ({
-            ...acc,
-            [k]: v
-          }), {});
-        try {
-          localStorage.setItem('searchResults', JSON.stringify(sortedResults));
-        } catch (err) {
-          console.error('Failed to update localStorage:', err);
+        
+        // Only update localStorage if authenticated
+        if (status === 'authenticated') {
+          // Sort by timestamp before saving
+          const sortedResults = Object.entries(newResults)
+            .sort(([keyA], [keyB]) => Number(keyA) - Number(keyB))
+            .reduce((acc, [k, v]) => ({
+              ...acc,
+              [k]: v
+            }), {});
+          
+          try {
+            localStorage.setItem('searchResults', JSON.stringify(sortedResults));
+            console.log('Updated localStorage after card deletion');
+          } catch (err) {
+            console.error('Failed to update localStorage:', err);
+          }
+        } else {
+          console.log('User not authenticated, skipping localStorage update for deletion');
         }
-        return sortedResults;
+        
+        return newResults;
       });
       
-      toast.success('Card removed');
+      toast('Card removed', {
+        icon: '✅',
+        duration: 3000
+      });
     } catch (error) {
       console.error('Delete failed:', error);
-      toast.error('Failed to delete card');
+      toast('Failed to delete card', {
+        icon: '❌',
+        duration: 3000
+      });
     }
   };
 
@@ -237,6 +415,12 @@ const Home = () => {
     );
   }
 
+  // Show landing page for unauthenticated users
+  if (status === 'unauthenticated') {
+    return <LandingPage />;
+  }
+
+  // Main app for authenticated users
   return (
     <div className="flex flex-col h-screen overflow-hidden relative">
       {/* Background SVG - Hidden on mobile */}
@@ -275,6 +459,12 @@ const Home = () => {
       <Navbar />
       
       <main className="flex-1 container max-w-4xl mx-auto px-4 pt-2 sm:pt-6 overflow-hidden relative">
+        {/* Login dialog */}
+        <LoginDialog
+          isOpen={showLoginPrompt}
+          onClose={() => setShowLoginPrompt(false)}
+        />
+        
         {/* Animated Open Book Icon and Title - Reduced top spacing */}
         <div className="flex flex-col items-center mb-3 sm:mb-6">
           <div className="relative">
@@ -321,8 +511,8 @@ const Home = () => {
             {/* Version selector - Reduced height on mobile */}
             <div className="border-t sm:border-t-0 border-cream-200/50 dark:border-navy-700/50">
               <VersionSelector
-                version={version}
-                onVersionChange={setVersion}
+                value={version}
+                onChange={setVersion}
                 className="w-full sm:w-[100px] h-12 sm:h-16"
               />
             </div>
@@ -356,12 +546,6 @@ const Home = () => {
           />
         </div>
       </main>
-
-      {/* Login Dialog */}
-      <LoginDialog 
-        isOpen={showLoginPrompt}
-        onClose={() => setShowLoginPrompt(false)}
-      />
     </div>
   );
 };
