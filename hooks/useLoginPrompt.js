@@ -1,23 +1,42 @@
 import { useState, useEffect } from 'react';
+import { useSession } from 'next-auth/react';
 
-export const useLoginPrompt = (searchResults) => {
+export const useLoginPrompt = () => {
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
-  const [hasPrompted, setHasPrompted] = useState(false);
-
+  const { status } = useSession();
+  
+  // Add debug logging for authentication status changes
   useEffect(() => {
-    // Check if user has 3 or more cards and hasn't been prompted yet
-    const resultsCount = Object.keys(searchResults || {}).length;
-    const hasSeenPrompt = localStorage.getItem('hasSeenLoginPrompt');
-    
-    if (resultsCount >= 3 && !hasSeenPrompt && !hasPrompted) {
-      setShowLoginPrompt(true);
-      setHasPrompted(true);
-      localStorage.setItem('hasSeenLoginPrompt', 'true');
-    }
-  }, [searchResults, hasPrompted]);
+    console.log(`useLoginPrompt: Authentication status changed to "${status}"`);
+  }, [status]);
 
+  // Function to check if user is authenticated
+  const requireLogin = () => {
+    console.log(`requireLogin called - current status: ${status}`);
+    
+    if (status === 'loading') {
+      console.log('Authentication state is still loading');
+      return null; // Authentication status is undetermined
+    }
+    
+    if (status === 'unauthenticated') {
+      console.log('User is not authenticated, showing login prompt');
+      setShowLoginPrompt(true);
+      return false; // User is not authorized
+    }
+    
+    console.log('User is authenticated');
+    return true; // User is authorized
+  };
+
+  // Calculate derived authentication state
+  const isAuthenticated = status === 'authenticated';
+  
   return {
     showLoginPrompt,
-    setShowLoginPrompt
+    setShowLoginPrompt,
+    requireLogin,
+    isAuthenticated,
+    status // Also expose the raw status for direct checks
   };
 }; 

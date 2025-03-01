@@ -1,5 +1,5 @@
 // Home.jsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Navbar from './Navbar';
 import Cards from './Cards';
 import { Input } from "@/components/ui/input";
@@ -10,19 +10,32 @@ import { toast } from 'react-hot-toast';
 import { useTheme } from "next-themes";
 import VersionSelector from '@/components/VersionSelector';
 import LoginDialog from '@/components/LoginDialog';
-import { useLoginPrompt } from '@/hooks/useLoginPrompt';
+import { useLoginPrompt } from '../hooks/useLoginPrompt';
 import { useSession } from 'next-auth/react';
 import LandingPage from '@/components/LandingPage';
+import useAuthListener from '../hooks/useAuthListener';
 
 const Home = () => {
   const [query, setQuery] = useState('');
   const [searchResults, setSearchResults] = useState({});
   const [isLoading, setIsLoading] = useState(false);
-  const [mounted, setMounted] = useState(false);
   const [version, setVersion] = useState('KJV');
-  const { theme } = useTheme();
-  const { showLoginPrompt, setShowLoginPrompt, requireLogin, isAuthenticated } = useLoginPrompt();
+  const [selectedPassage, setSelectedPassage] = useState(null);
+  const [passageText, setPassageText] = useState('');
+  const [savedCards, setSavedCards] = useState([]);
   const { data: session, status } = useSession();
+  const { showLoginPrompt, setShowLoginPrompt, requireLogin, isAuthenticated } = useLoginPrompt();
+  const searchInputRef = useRef(null);
+  const { theme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  // Call the authentication listener hook
+  useAuthListener();
+  
+  // Ensure authentication state is properly logged for debugging
+  useEffect(() => {
+    console.log(`Auth state updated - status: ${status}, isAuthenticated: ${isAuthenticated}`);
+  }, [status, isAuthenticated]);
 
   // Handle mounting
   useEffect(() => {
@@ -136,11 +149,22 @@ const Home = () => {
       return;
     }
 
-    // Check if user is logged in before proceeding
-    console.log(`Checking authentication: isAuthenticated=${isAuthenticated}`);
-    if (!requireLogin()) {
-      // If not logged in, the login dialog will be shown by the hook
+    // Modified authentication check to be more robust
+    console.log(`Checking authentication: status=${status}`);
+    
+    // Wait for authentication to complete if it's still loading
+    if (status === 'loading') {
+      toast('Please wait while we verify your session...', {
+        icon: '⏳',
+        duration: 2000
+      });
+      return;
+    }
+    
+    // Use session status directly instead of the derived isAuthenticated
+    if (status === 'unauthenticated') {
       console.warn('User not logged in, showing login dialog');
+      setShowLoginPrompt(true); // Directly set login prompt
       return;
     }
 
@@ -162,7 +186,7 @@ const Home = () => {
         verse: result.verse,
         verseLocation: result.verseLocation,
         query: searchQuery,
-        version
+        version: version
       };
       console.log('Card data prepared:', cardData);
 
@@ -288,7 +312,7 @@ const Home = () => {
           verse: result.verse,
           verseLocation: result.verseLocation,
           query: queryToRefresh,
-          version
+          version: version
         };
         
         // Create timestamp for sorting
