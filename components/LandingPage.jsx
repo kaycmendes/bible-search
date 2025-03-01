@@ -175,7 +175,7 @@ const ExampleCard = ({ verse, verseLocation, query, index }) => (
       <CardHeader className="pb-2 bg-cream-50/70 dark:bg-navy-800/90 border-b border-cream-200/50 dark:border-navy-700/50">
         <CardTitle className="flex justify-between items-start">
           <span className="text-sm font-medium text-navy-800 dark:text-cream-100 p-1">
-            "{query}"
+            &quot;{query}&quot;
           </span>
         </CardTitle>
       </CardHeader>
