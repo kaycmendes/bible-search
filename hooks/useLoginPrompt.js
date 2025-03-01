@@ -7,11 +7,17 @@ export const useLoginPrompt = () => {
   
   // Add debug logging for authentication status changes
   useEffect(() => {
-    console.log(`useLoginPrompt: Authentication status changed to "${status}"`);
+    console.log(`useLoginPrompt: Authentication status changed to "${status || 'undefined'}"`);
   }, [status]);
 
   // Function to check if user is authenticated
   const requireLogin = () => {
+    // Handle undefined status case explicitly
+    if (typeof status === 'undefined') {
+      console.error('requireLogin: Authentication status is undefined');
+      return null; // Can't determine authentication state
+    }
+    
     console.log(`requireLogin called - current status: ${status}`);
     
     if (status === 'loading') {
@@ -29,7 +35,7 @@ export const useLoginPrompt = () => {
     return true; // User is authorized
   };
 
-  // Calculate derived authentication state
+  // Calculate derived authentication state with safety check
   const isAuthenticated = status === 'authenticated';
   
   return {

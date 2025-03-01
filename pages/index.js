@@ -13,7 +13,7 @@ import LoginDialog from '@/components/LoginDialog';
 import { useLoginPrompt } from '../hooks/useLoginPrompt';
 import { useSession } from 'next-auth/react';
 import LandingPage from '@/components/LandingPage';
-import useAuthListener from '../hooks/useAuthListener';
+import { useAuthListener } from '../hooks/useAuthListener';
 
 const Home = () => {
   const [query, setQuery] = useState('');
@@ -149,11 +149,22 @@ const Home = () => {
       return;
     }
 
-    // Modified authentication check to be more robust
-    console.log(`Checking authentication: status=${status}`);
+    // Safety check: Make sure we have access to the session status
+    if (typeof status === 'undefined') {
+      console.error('Authentication status is undefined');
+      toast('Unable to verify your session. Please refresh the page and try again.', {
+        icon: '⚠️',
+        duration: 3000
+      });
+      return;
+    }
+
+    // Authentication check logging with explicit error handling
+    console.log(`Checking authentication: status=${status}, isAuthenticated=${!!isAuthenticated}`);
     
     // Wait for authentication to complete if it's still loading
     if (status === 'loading') {
+      console.log('Auth still loading, showing wait message');
       toast('Please wait while we verify your session...', {
         icon: '⏳',
         duration: 2000
@@ -162,7 +173,7 @@ const Home = () => {
     }
     
     // Use session status directly instead of the derived isAuthenticated
-    if (status === 'unauthenticated') {
+    if (status !== 'authenticated') {
       console.warn('User not logged in, showing login dialog');
       setShowLoginPrompt(true); // Directly set login prompt
       return;
