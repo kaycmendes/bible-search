@@ -1,4 +1,3 @@
-import { supabase } from '@/lib/supabase'
 import { getServerSession } from 'next-auth/next'
 import { authOptions } from './auth/[...nextauth]'
 import { createClient } from '@supabase/supabase-js'
@@ -39,13 +38,21 @@ export default async function handler(req, res) {
 
   // POST - Save new card
   if (req.method === 'POST') {
+    // Ensure verse_location is not null and handle field mapping
+    const verseLocation = req.body.verseLocation || req.body.verse_location;
+    
+    if (!verseLocation) {
+      console.error('Missing verse_location:', req.body);
+      return res.status(400).json({ error: 'verse_location is required' });
+    }
+    
     const { data, error } = await supabaseAdmin
       .from('cards')
       .insert([
         { 
           user_email: session.user.email,
           verse: req.body.verse,
-          verse_location: req.body.verseLocation,
+          verse_location: verseLocation,
           query: req.body.query,
           version: req.body.version
         }
@@ -61,10 +68,17 @@ export default async function handler(req, res) {
 
   // DELETE - Remove a card
   if (req.method === 'DELETE') {
+    // Handle both field name variations
+    const verseLocation = req.query.verse_location || req.query.verseLocation;
+    
+    if (!verseLocation) {
+      return res.status(400).json({ error: 'verse_location is required' });
+    }
+    
     const { error } = await supabaseAdmin
       .from('cards')
       .delete()
-      .eq('verse_location', req.query.verse_location)
+      .eq('verse_location', verseLocation)
       .eq('user_email', session.user.email)
       
     if (error) {
@@ -80,7 +94,7 @@ export default async function handler(req, res) {
     
     try {
       // First, get existing cards
-      const { data: existingCards } = await supabase
+      const { data: existingCards } = await supabaseAdmin
         .from('cards')
         .select('verse_location')
         .eq('user_email', session.user.email)
@@ -96,7 +110,7 @@ export default async function handler(req, res) {
       }
 
       // Insert new cards
-      const { data, error } = await supabase
+      const { data, error } = await supabaseAdmin
         .from('cards')
         .insert(newCards.map(card => ({
           user_email: session.user.email,

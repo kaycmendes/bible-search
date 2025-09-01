@@ -41,8 +41,9 @@ const Cards = ({ results, isLoading, onRefresh, version, onDelete }) => {
     return <LoadingCard />;
   }
 
-  // Convert object to array and reverse it to show newest first
-  const resultsArray = Object.entries(results || {}).reverse();
+  // Convert object to array and sort by timestamp to show newest first
+  const resultsArray = Object.entries(results || {})
+    .sort(([a], [b]) => parseInt(b) - parseInt(a));
 
   return (
     <div className="relative h-[calc(100vh-12rem)] overflow-hidden">

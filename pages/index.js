@@ -1,586 +1,640 @@
 // Home.jsx
-import React, { useState, useEffect, useRef } from 'react';
-import Navbar from './Navbar';
-import Cards from './Cards';
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Search, Loader2 } from "lucide-react";
-import { searchBiblePassage } from '@/utils/api';
-import { toast } from 'react-hot-toast';
-import { useTheme } from "next-themes";
-import VersionSelector from '@/components/VersionSelector';
-import LoginDialog from '@/components/LoginDialog';
-import { useLoginPrompt } from '../hooks/useLoginPrompt';
+import React, { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
-import LandingPage from '@/components/LandingPage';
+import { useTheme } from "next-themes";
+import { toast } from 'react-hot-toast';
 import { useAuthListener } from '../hooks/useAuthListener';
+import ModernLandingPage from '@/components/ModernLandingPage';
+import ModernSearchInterface from '@/components/ModernSearchInterface';
+import ModernVerseCard from '@/components/ModernVerseCard';
+import AppNavbar from '@/components/AppNavbar';
+import { ChevronDown, RefreshCw, Trash2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import Link from 'next/link';
+import { motion } from 'framer-motion';
 
 const Home = () => {
-  const [query, setQuery] = useState('');
   const [searchResults, setSearchResults] = useState({});
   const [isLoading, setIsLoading] = useState(false);
   const [version, setVersion] = useState('KJV');
-  const [selectedPassage, setSelectedPassage] = useState(null);
-  const [passageText, setPassageText] = useState('');
-  const [savedCards, setSavedCards] = useState([]);
+  const [globalLayout, setGlobalLayout] = useState('vertical'); // 'vertical' or 'horizontal'
   const { data: session, status } = useSession();
-  const { showLoginPrompt, setShowLoginPrompt, requireLogin, isAuthenticated } = useLoginPrompt();
-  const searchInputRef = useRef(null);
   const { theme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
   // Call the authentication listener hook
   useAuthListener();
-  
-  // Ensure authentication state is properly logged for debugging
-  useEffect(() => {
-    console.log(`Auth state updated - status: ${status}, isAuthenticated: ${isAuthenticated}`);
-  }, [status, isAuthenticated]);
 
   // Handle mounting
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  // Load saved cards on mount and clear them when user logs out
+  // Load saved cards on mount
   useEffect(() => {
-    // Always check session status first
-    if (status === 'unauthenticated') {
-      // Clear search results from state when user is not authenticated
-      setSearchResults({});
-      console.log('Cleared search results from state due to unauthenticated status');
-      return;
+    if (status === 'authenticated' && session) {
+      loadSavedCards();
     }
-    
-    // Load from localStorage only if authenticated
-    if (status === 'authenticated') {
-      try {
-        const savedResults = localStorage.getItem('searchResults');
-        if (savedResults) {
-          // Convert to array, sort by timestamp (key), and convert back to object
-          const savedCards = JSON.parse(savedResults);
-          const sortedCards = Object.entries(savedCards)
-            .sort(([keyA], [keyB]) => Number(keyA) - Number(keyB))
-            .reduce((acc, [key, value]) => ({
-              ...acc,
-              [key]: value
-            }), {});
-          setSearchResults(sortedCards);
-        }
-      } catch (err) {
-        console.error('Failed to load from localStorage:', err);
-        localStorage.removeItem('searchResults');
-      }
-
-      // Additionally load from Supabase if logged in
-      if (session) {
-        loadSavedCards();
-        syncLocalCards();
-      }
-    }
-  }, [session, status]); // Depend on session and status changes
+  }, [session, status]);
 
   const loadSavedCards = async () => {
     try {
-      const response = await fetch('/api/cards');
-      console.log('Loading cards response:', response);
-      if (response.ok) {
-        const cards = await response.json();
-        console.log('Loaded cards:', cards);
-        const cardsObj = {};
-        cards.reverse().forEach(card => {
-          cardsObj[card.id] = {
-            verse: card.verse,
-            verseLocation: card.verse_location,
-            query: card.query,
-            version: card.version
-          };
-        });
-        console.log('Formatted cards:', cardsObj);
-        setSearchResults(cardsObj);
+      // Load from localStorage
+      const localCards = JSON.parse(localStorage.getItem('searchResults') || '{}');
+      setSearchResults(localCards);
+
+      // Try to load from database
+      try {
+        const response = await fetch('/api/cards');
+        if (response.ok) {
+          const cards = await response.json();
+          const cardsObj = {};
+          cards.reverse().forEach((card, index) => {
+            const cardId = card.id || card.verse_location || `card_${index}`;
+            cardsObj[cardId] = {
+              verse: card.verse,
+              verseLocation: card.verse_location,
+              query: card.query,
+              version: card.version
+            };
+          });
+          setSearchResults(cardsObj);
+        }
+      } catch (error) {
+        console.error('Failed to load cards from database:', error);
       }
     } catch (error) {
       console.error('Failed to load cards:', error);
-      toast('Failed to load saved cards', {
-        icon: '❌',
-        duration: 3000
-      });
-    }
-  };
-
-  const syncLocalCards = async () => {
-    try {
-      const localCards = JSON.parse(localStorage.getItem('searchResults') || '{}');
-      if (Object.keys(localCards).length === 0) return;
-      
-      const response = await fetch('/api/cards', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ cards: localCards })
-      });
-      
-      if (response.ok) {
-        const result = await response.json();
-        if (result.synced > 0) {
-          toast(`Synced ${result.synced} cards to cloud`, {
-            icon: '✅',
-            duration: 3000
-          });
-        }
-      }
-    } catch (error) {
-      console.error('Sync failed:', error);
-      toast('Failed to sync cards with cloud', {
-        icon: '❌',
-        duration: 3000
-      });
     }
   };
 
   const handleSearch = async (searchQuery) => {
-    console.log(`handleSearch called with query: "${searchQuery}"`);
-    
-    if (!searchQuery?.trim()) {
-      console.log('Empty search query, returning');
-      toast('Please enter a search query', {
-        icon: '❌',
-        duration: 3000
-      });
-      return;
-    }
-
-    // Safety check: Make sure we have access to the session status
-    if (typeof status === 'undefined') {
-      console.error('Authentication status is undefined');
-      toast('Unable to verify your session. Please refresh the page and try again.', {
-        icon: '⚠️',
-        duration: 3000
-      });
-      return;
-    }
-
-    // Authentication check logging with explicit error handling
-    console.log(`Checking authentication: status=${status}, isAuthenticated=${!!isAuthenticated}`);
-    
-    // Wait for authentication to complete if it's still loading
-    if (status === 'loading') {
-      console.log('Auth still loading, showing wait message');
-      toast('Please wait while we verify your session...', {
-        icon: '⏳',
-        duration: 2000
-      });
-      return;
-    }
-    
-    // Use session status directly instead of the derived isAuthenticated
-    if (status !== 'authenticated') {
-      console.warn('User not logged in, showing login dialog');
-      setShowLoginPrompt(true); // Directly set login prompt
-      return;
-    }
+    if (!searchQuery.trim()) return;
 
     setIsLoading(true);
-    console.log('Starting Bible passage search');
-    
+    const timestamp = Date.now();
+
     try {
-      console.log(`Calling searchBiblePassage API with query="${searchQuery}", version="${version}"`);
-      const result = await searchBiblePassage(searchQuery, version);
-      console.log('Search result:', result);
-      
-      if (!result) {
-        console.warn('No results found for query');
-        throw new Error('No results found');
+      const response = await fetch('/api/search', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          query: searchQuery,
+          version: version,
+          lastVerse: ''
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      // Format the result object
-      const cardData = {
-        verse: result.verse,
-        verseLocation: result.verseLocation,
-        query: searchQuery,
-        version: version
-      };
-      console.log('Card data prepared:', cardData);
+      const data = await response.json();
 
-      // Create timestamp for sorting
-      const timestamp = Date.now();
-
-      // Only update localStorage if the user is authenticated
-      if (status === 'authenticated') {
-        const newResults = {
-          ...searchResults,
-          [timestamp]: cardData
+      if (data.verse && data.verseLocation) {
+        const newCard = {
+          verse: data.verse,
+          verseLocation: data.verseLocation,
+          query: searchQuery,
+          version: version
         };
 
-        try {
-          console.log('Saving to localStorage');
-          localStorage.setItem('searchResults', JSON.stringify(newResults));
-          console.log('Successfully saved to localStorage');
-        } catch (err) {
-          console.error('Failed to save to localStorage:', err);
-        }
-        
-        console.log('Updating state with new results');
-        setSearchResults(newResults);
-      } else {
-        console.log('User not authenticated, skipping localStorage save');
-        // Still update the state for the current session
-        setSearchResults(prev => ({
-          ...prev,
-          [timestamp]: cardData
-        }));
-      }
+        // Save to localStorage
+        const updatedResults = {
+          ...searchResults,
+          [timestamp]: newCard
+        };
+        setSearchResults(updatedResults);
+        localStorage.setItem('searchResults', JSON.stringify(updatedResults));
 
-      // Additionally save to database if logged in
-      if (session) {
-        console.log('User is logged in, attempting to save to database');
+        // Try to save to database
         try {
-          console.log('Making POST request to /api/cards');
-          const saveResponse = await fetch('/api/cards', {
+          await fetch('/api/cards', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
             },
-            body: JSON.stringify(cardData),
+            body: JSON.stringify({
+              verse: data.verse,
+              verse_location: data.verseLocation,
+              query: searchQuery,
+              version: version
+            }),
           });
-
-          console.log('API response status:', saveResponse.status);
-          
-          if (!saveResponse.ok) {
-            const errorData = await saveResponse.json();
-            console.error('Database save error details:', errorData);
-            throw new Error(errorData.error || 'Failed to save to database');
-          }
-
-          const savedCard = await saveResponse.json();
-          console.log('Successfully saved to database:', savedCard);
         } catch (error) {
           console.error('Failed to save to database:', error);
-          // Don't show toast error for database issues when local storage is working
-          // This prevents user confusion as the card is still functional locally
-          console.warn('Card saved locally but failed to sync with cloud');
-        }
-      } else {
-        console.log('User not logged in, skipping database save');
-      }
-
-      setQuery('');
-      toast('Verse found!', {
-        icon: '✅',
-        duration: 3000
-      });
-      console.log('Search completed successfully');
-      
-    } catch (error) {
-      console.error('Search failed with error:', error);
-      toast(error.message || 'Failed to get response. Please try again.', {
-        icon: '❌',
-        duration: 3000
-      });
-    } finally {
-      setIsLoading(false);
-      console.log('Search process completed (success or failure)');
-    }
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!query.trim()) {
-      toast('Please enter a question', {
-        icon: '❌',
-        duration: 3000
-      });
-      return;
-    }
-    handleSearch(query);
-  };
-
-  const handleRefresh = async (queryToRefresh) => {
-    console.log(`handleRefresh called with query: "${queryToRefresh}"`);
-    
-    // Set loading state immediately
-    setIsLoading(true);
-    
-    try {
-      // Track authentication status before proceeding
-      console.log(`User authentication status: ${status}, session exists: ${!!session}`);
-      
-      // For existing cards, we can bypass the login prompt since the user already has cards
-      // Skip the requireLogin check and call searchBiblePassage directly
-      
-      console.log(`Direct search for query: "${queryToRefresh}", version: "${version}"`);
-      
-      try {
-        const result = await searchBiblePassage(queryToRefresh, version);
-        console.log('Refresh search result:', result);
-        
-        if (!result) {
-          console.warn('No results found for refresh query');
-          throw new Error('No results found');
         }
 
-        // Format and save the card data as in the original handleSearch function
-        const cardData = {
-          verse: result.verse,
-          verseLocation: result.verseLocation,
-          query: queryToRefresh,
-          version: version
-        };
-        
-        // Create timestamp for sorting
-        const timestamp = Date.now();
-        
-        // Only update localStorage if user is authenticated
-        if (status === 'authenticated') {
-          // Update localStorage and state
-          const newResults = {
-            ...searchResults,
-            [timestamp]: cardData
-          };
-          
-          try {
-            localStorage.setItem('searchResults', JSON.stringify(newResults));
-            console.log('Saved refresh result to localStorage');
-          } catch (storageErr) {
-            console.error('Failed to save to localStorage:', storageErr);
-          }
-          
-          setSearchResults(newResults);
-        } else {
-          console.log('User not authenticated, skipping localStorage save for refresh');
-          // Still update the state for the current session
-          setSearchResults(prev => ({
-            ...prev,
-            [timestamp]: cardData
-          }));
-        }
-        
-        // Save to database if logged in
-        if (session) {
-          try {
-            const saveResponse = await fetch('/api/cards', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(cardData),
-            });
-            
-            if (!saveResponse.ok) {
-              const errorData = await saveResponse.json();
-              console.error('Database save error during refresh:', errorData);
-              // Don't throw here, we still have the local card
-            }
-          } catch (dbError) {
-            console.error('Failed to save refresh to database:', dbError);
-            // Don't throw here either
-          }
-        }
-        
-        console.log(`handleSearch completed for refresh query: "${queryToRefresh}"`);
-      } catch (searchError) {
-        console.error(`Search error during refresh: ${searchError.message}`);
-        throw searchError; // Propagate error back to the caller
-      }
-    } catch (error) {
-      console.error(`Error in handleRefresh for query "${queryToRefresh}":`, error);
-      throw error; // Propagate error back to the caller
-    } finally {
-      setIsLoading(false);
-      console.log('Refresh process completed (success or failure)');
-    }
-  };
-
-  const handleDeleteCard = async (key) => {
-    try {
-      // Delete from database first if logged in
-      if (session) {
-        const response = await fetch(`/api/cards?verse_location=${searchResults[key].verseLocation}`, {
-          method: 'DELETE'
+        toast.success('Verse found!', {
+          icon: '✅',
+          duration: 3000
         });
-        
-        if (!response.ok) {
-          throw new Error('Failed to delete from database');
-        }
+      } else {
+        toast.error('No verse found. Try a different search term.', {
+          icon: '❌',
+          duration: 3000
+        });
+      }
+    } catch (error) {
+      console.error('Search failed:', error);
+      toast.error('Search failed. Please try again.', {
+        icon: '❌',
+        duration: 3000
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleRefresh = async (timestamp) => {
+    const card = searchResults[timestamp];
+    if (!card) return;
+
+    setIsLoading(true);
+    const newTimestamp = Date.now();
+
+    try {
+      const response = await fetch('/api/search', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          query: card.query,
+          version: card.version,
+          lastVerse: card.verseLocation
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      // Update local state
-      setSearchResults(prev => {
-        const newResults = { ...prev };
-        delete newResults[key];
-        
-        // Only update localStorage if authenticated
-        if (status === 'authenticated') {
-          // Sort by timestamp before saving
-          const sortedResults = Object.entries(newResults)
-            .sort(([keyA], [keyB]) => Number(keyA) - Number(keyB))
-            .reduce((acc, [k, v]) => ({
-              ...acc,
-              [k]: v
-            }), {});
-          
-          try {
-            localStorage.setItem('searchResults', JSON.stringify(sortedResults));
-            console.log('Updated localStorage after card deletion');
-          } catch (err) {
-            console.error('Failed to update localStorage:', err);
-          }
-        } else {
-          console.log('User not authenticated, skipping localStorage update for deletion');
+      const data = await response.json();
+
+      if (data.verse && data.verseLocation) {
+        const newCard = {
+          verse: data.verse,
+          verseLocation: data.verseLocation,
+          query: card.query,
+          version: card.version
+        };
+
+        const updatedResults = {
+          ...searchResults,
+          [newTimestamp]: newCard
+        };
+        setSearchResults(updatedResults);
+        localStorage.setItem('searchResults', JSON.stringify(updatedResults));
+
+        // Try to save to database
+        try {
+          await fetch('/api/cards', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(newCard),
+          });
+        } catch (error) {
+          console.error('Failed to save to database:', error);
         }
-        
-        return newResults;
+
+        toast.success('New verse added!', {
+          icon: '✨',
+          duration: 3000
+        });
+      }
+    } catch (error) {
+      console.error('Refresh failed:', error);
+      toast.error('Failed to generate new verse. Please try again.', {
+        icon: '❌',
+        duration: 3000
       });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleDelete = async (timestamp) => {
+    const updatedResults = { ...searchResults };
+    delete updatedResults[timestamp];
+    setSearchResults(updatedResults);
+    localStorage.setItem('searchResults', JSON.stringify(updatedResults));
+
+    // Try to delete from database
+    try {
+      const cardToDelete = searchResults[timestamp];
+      if (cardToDelete?.verseLocation) {
+        await fetch(`/api/cards?verse_location=${encodeURIComponent(cardToDelete.verseLocation)}`, {
+          method: 'DELETE',
+        });
+      }
+    } catch (error) {
+      console.error('Failed to delete from database:', error);
+    }
+
+    toast.success('Card deleted!', {
+      icon: '✅',
+      duration: 3000
+    });
+  };
+
+    const handleGenerateAnother = async (query) => {
+    if (!query.trim()) return;
+    
+    setIsLoading(true);
+    const timestamp = Date.now();
+    
+    try {
+      const response = await fetch('/api/search', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          query: query.trim(),
+          version: version,
+          lastVerse: Object.values(searchResults)[0]?.verseLocation || ''
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Search failed');
+      }
+
+      const data = await response.json();
       
-      toast('Card removed', {
-        icon: '✅',
+      const newCard = {
+        verse: data.verse,
+        verseLocation: data.verseLocation,
+        query: query.trim(),
+        version: version
+      };
+
+      // Save to localStorage
+      const updatedResults = {
+        ...searchResults,
+        [timestamp]: newCard
+      };
+      setSearchResults(updatedResults);
+      localStorage.setItem('searchResults', JSON.stringify(updatedResults));
+
+      // Try to save to database
+      try {
+        await fetch('/api/cards', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(newCard),
+        });
+      } catch (error) {
+        console.error('Failed to save to database:', error);
+      }
+
+      toast.success('Generated new verse!', {
+        icon: '✨',
         duration: 3000
       });
     } catch (error) {
-      console.error('Delete failed:', error);
-      toast('Failed to delete card', {
+      console.error('Search error:', error);
+      toast.error('Failed to generate new verse', {
+        icon: '❌',
+        duration: 3000
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleStudyScripture = (verseLocation, verse) => {
+    // Parse verse location to get book, chapter, and verse
+    const match = verseLocation.match(/(\w+)\s+(\d+):(\d+)/);
+    if (match) {
+      const [, book, chapter, verseNum] = match;
+      const bookAbbr = book.toLowerCase().substring(0, 3);
+      const blueLetterUrl = `https://www.blueletterbible.org/kjv/${bookAbbr}/${chapter}/${verseNum}/`;
+      
+      // Open Blue Letter Bible in new tab
+      window.open(blueLetterUrl, '_blank');
+    } else {
+      toast.error('Could not parse verse location', {
         icon: '❌',
         duration: 3000
       });
     }
   };
 
-  if (!mounted || status === 'loading') {
+  const handleVersionChange = (newVersion) => {
+    setVersion(newVersion);
+    console.log('Version changed to:', newVersion);
+  };
+
+  if (!mounted) return null;
+
+  // Show landing page for unauthenticated users
+  if (status === 'unauthenticated') {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="animate-pulse text-2xl text-primary">Loading...</div>
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-900 dark:to-slate-800">
+        <ModernLandingPage />
       </div>
     );
   }
 
-  // Show landing page for unauthenticated users
-  if (status === 'unauthenticated') {
-    return <LandingPage />;
+  // Show loading state
+  if (status === 'loading' || !mounted) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-900 dark:to-slate-800 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-slate-600 dark:text-slate-400">Loading...</p>
+        </div>
+      </div>
+    );
   }
 
   // Main app for authenticated users
   return (
-    <div className="flex flex-col h-screen overflow-hidden relative">
-      {/* Background SVG - Hidden on mobile */}
-      <div className="absolute inset-0 pointer-events-none hidden sm:block" aria-hidden="true">
-        <svg 
-          xmlns="http://www.w3.org/2000/svg" 
-          viewBox="0 0 480 360" 
-          className="w-full h-full opacity-[0.08] dark:opacity-[0.04]"
-          preserveAspectRatio="xMidYMid slice"
-        >
-          <defs>
-            <linearGradient id="borderGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" className="text-navy-400" stopColor="currentColor" />
-              <stop offset="100%" className="text-sage-400" stopColor="currentColor" />
-            </linearGradient>
-            <filter id="glow">
-              <feGaussianBlur stdDeviation="2" result="blur" />
-              <feComposite in="blur" operator="over" in2="SourceGraphic" />
-            </filter>
-          </defs>
-          <g className="animate-border-flow">
-            <path 
-              fill="none" 
-              stroke="url(#borderGradient)" 
-              strokeLinecap="round" 
-              strokeLinejoin="round" 
-              strokeWidth="1.5"
-              filter="url(#glow)"
-              className="border-path"
-              d="M410 224.7a65 65 0 0 0 20-44.7 65 65 0 0 0-20-44.7V100h-20V60H90v40H70v35.3a65 65 0 0 0 0 89.4V260h20v40h300v-40h20v-35.3Z"
-            />
-          </g>
-        </svg>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-900 dark:to-slate-800 relative overflow-hidden">
+      {/* App Navbar */}
+      <AppNavbar />
+
+      {/* Animated Background Patterns */}
+      <div className="absolute inset-0 pointer-events-none">
+        {/* Floating Crosses */}
+        <div className="absolute top-20 left-10 w-8 h-8 opacity-20 animate-float-slow">
+          <svg viewBox="0 0 24 24" fill="currentColor" className="w-full h-full text-blue-400">
+            <path d="M12 2L13.09 8.26L20 9L13.09 9.74L12 16L10.91 9.74L4 9L10.91 8.26L12 2Z" />
+          </svg>
+        </div>
+        <div className="absolute top-40 right-20 w-6 h-6 opacity-15 animate-float-medium">
+          <svg viewBox="0 0 24 24" fill="currentColor" className="w-full h-full text-blue-400">
+            <path d="M12 2L13.09 8.26L20 9L13.09 9.74L12 16L10.91 9.74L4 9L10.91 8.26L12 2Z" />
+          </svg>
+        </div>
+        <div className="absolute bottom-32 left-1/4 w-10 h-10 opacity-25 animate-float-fast">
+          <svg viewBox="0 0 24 24" fill="currentColor" className="w-full h-full text-blue-400">
+            <path d="M12 2L13.09 8.26L20 9L13.09 9.74L12 16L10.91 9.74L4 9L10.91 8.26L12 2Z" />
+          </svg>
+        </div>
+
+        {/* Geometric Patterns */}
+        <div className="absolute top-0 left-0 w-full h-full opacity-5">
+          <svg viewBox="0 0 100 100" className="w-full h-full">
+            <defs>
+              <pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse">
+                <path d="M 10 0 L 0 0 0 10" fill="none" stroke="currentColor" strokeWidth="0.5" className="text-blue-300" />
+              </pattern>
+            </defs>
+            <rect width="100" height="100" fill="url(#grid)" />
+          </svg>
+        </div>
+
+        {/* Animated Lines */}
+        <div className="absolute top-1/4 left-0 w-full h-px bg-gradient-to-r from-transparent via-blue-300/20 to-transparent animate-pulse"></div>
+        <div className="absolute top-3/4 left-0 w-full h-px bg-gradient-to-r from-transparent via-blue-300/20 to-transparent animate-pulse" style={{ animationDelay: '1s' }}></div>
+
+        {/* Additional Biblical Patterns */}
+        <div className="absolute top-1/3 right-10 w-12 h-12 opacity-10 animate-float-slow">
+          <svg viewBox="0 0 24 24" fill="currentColor" className="w-full h-full text-indigo-400">
+            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+          </svg>
+        </div>
+
+        <div className="absolute bottom-1/4 right-1/3 w-8 h-8 opacity-15 animate-float-medium">
+          <svg viewBox="0 0 24 24" fill="currentColor" className="w-full h-full text-slate-400">
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
+          </svg>
+        </div>
+
+        {/* More Biblical Symbols */}
+        <div className="absolute top-1/2 left-1/3 w-6 h-6 opacity-20 animate-float-fast">
+          <svg viewBox="0 0 24 24" fill="currentColor" className="w-full h-full text-blue-500">
+            <path d="M12 2L13.09 8.26L20 9L13.09 9.74L12 16L10.91 9.74L4 9L10.91 8.26L12 2Z" />
+          </svg>
+        </div>
+
+        <div className="absolute top-2/3 right-1/4 w-10 h-10 opacity-15 animate-float-slow">
+          <svg viewBox="0 0 24 24" fill="currentColor" className="w-full h-full text-indigo-500">
+            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+          </svg>
+        </div>
+
+        {/* Subtle Dot Pattern */}
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute top-1/6 left-1/6 w-2 h-2 bg-blue-400 rounded-full animate-pulse"></div>
+          <div className="absolute top-1/3 right-1/6 w-1.5 h-1.5 bg-indigo-400 rounded-full animate-pulse" style={{ animationDelay: '0.5s' }}></div>
+          <div className="absolute top-2/3 left-1/4 w-1 h-1 bg-slate-400 rounded-full animate-pulse" style={{ animationDelay: '1s' }}></div>
+          <div className="absolute bottom-1/3 right-1/3 w-2.5 h-2.5 bg-blue-300 rounded-full animate-pulse" style={{ animationDelay: '1.5s' }}></div>
+        </div>
       </div>
 
-      <Navbar />
-      
-      <main className="flex-1 container max-w-4xl mx-auto px-4 pt-2 sm:pt-6 overflow-hidden relative">
-        {/* Login dialog */}
-        <LoginDialog
-          isOpen={showLoginPrompt}
-          onClose={() => setShowLoginPrompt(false)}
-        />
-        
-        {/* Animated Open Book Icon and Title - Reduced top spacing */}
-        <div className="flex flex-col items-center mb-3 sm:mb-6">
-          <div className="relative">
-            <div className="absolute inset-0 blur-2xl animate-glow-1 bg-gradient-to-r from-navy-400/30 to-sage-400/30" />
-            <div className="absolute inset-0 blur-xl animate-glow-2 bg-gradient-to-l from-navy-300/20 to-sage-300/20" />
-            <div className="absolute inset-0 blur-lg animate-glow-3 bg-gradient-to-t from-navy-200/10 to-sage-200/10" />
-            
-            {/* Book icon */}
-            <svg
-              viewBox="0 0 24 24"
-              className="relative w-10 h-10 sm:w-16 sm:h-16 animate-gradient mb-2 sm:mb-3"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                d="M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25"
-                className="stroke-gradient"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-          </div>
-          <h1 className="font-cinzel text-lg sm:text-3xl tracking-[0.2em] text-navy-800 dark:text-cream-100 font-semibold">
-            HOLY BIBLE
-          </h1>
-        </div>
+      {/* Modern Search Interface */}
+      <ModernSearchInterface
+        results={searchResults}
+        isLoading={isLoading}
+        onSearch={handleSearch}
+        onRefresh={handleRefresh}
+        onDelete={handleDelete}
+        version={version}
+        onVersionChange={handleVersionChange}
+        session={session}
+      />
 
-        {/* Search section - Adjusted heights */}
-        <div className="w-full max-w-5xl mx-auto px-2 sm:px-4 mb-2 sm:mb-4">
-          <div className="flex flex-col sm:flex-row w-full bg-cream-50/80 dark:bg-navy-800/50 rounded-xl sm:rounded-2xl overflow-hidden border border-cream-200/20 dark:border-navy-700/20 shadow-lg hover:shadow-xl transition-all duration-300">
-            {/* Input with reduced height on mobile */}
-            <div className="flex-1 flex items-stretch">
-              <Input
-                type="text"
-                placeholder="Ask the Bible..."
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleSearch(query)}
-                className="flex-1 h-full min-h-[3rem] sm:min-h-[4rem] px-4 sm:px-8 bg-transparent border-0 focus-visible:ring-0 focus-visible:ring-offset-0 focus:outline-none text-base sm:text-xl placeholder:text-navy-400/60 dark:placeholder:text-cream-200/40 text-navy-800 dark:text-cream-50"
-              />
+      {/* Centered Search Result Display */}
+      <section className="flex-1 flex items-center justify-center px-4 sm:px-6 lg:px-8 py-16">
+        <div className="max-w-4xl mx-auto text-center">
+          {isLoading ? (
+            /* Loading Animation with Wave Effect */
+            <div className="space-y-6">
+              <div className="flex justify-center space-x-2">
+                {[0, 1, 2, 3, 4].map((i) => (
+                  <div
+                    key={i}
+                    className="w-3 h-3 bg-blue-500 rounded-full animate-pulse"
+                    style={{
+                      animationDelay: `${i * 0.1}s`,
+                      animationDuration: '1.5s'
+                    }}
+                  />
+                ))}
+              </div>
+              <div className="space-y-4">
+                <div className="h-8 bg-slate-200 dark:bg-slate-700 rounded-lg animate-pulse max-w-md mx-auto"></div>
+                <div className="h-6 bg-slate-200 dark:bg-slate-700 rounded-lg animate-pulse max-w-sm mx-auto"></div>
+              </div>
+              <p className="text-slate-600 dark:text-slate-400">Searching the Bible...</p>
             </div>
+          ) : Object.keys(searchResults).length > 0 ? (
+            /* Current Search Result */
+            <div className="space-y-8">
+              <div className="inline-flex items-center space-x-2 bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400 px-4 py-2 rounded-full text-sm font-medium">
+                <span>Latest Search</span>
+              </div>
 
-            {/* Version selector - Reduced height on mobile */}
-            <div className="border-t sm:border-t-0 border-cream-200/50 dark:border-navy-700/50">
-              <VersionSelector
-                value={version}
-                onChange={setVersion}
-                className="w-full sm:w-[100px] h-12 sm:h-16"
-              />
+              {/* Get the most recent card */}
+              {(() => {
+                const latestCard = Object.entries(searchResults)
+                  .sort(([a], [b]) => parseInt(b) - parseInt(a))[0];
+                const card = latestCard[1];
+
+                return (
+                  <div className="bg-white dark:bg-slate-800 rounded-3xl shadow-2xl p-8 border border-slate-100 dark:border-slate-700">
+                    <div className="mb-6">
+                      <div className="inline-flex items-center px-3 py-1 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-400 text-sm font-medium rounded-full mb-4">
+                        Question: {card.query}
+                      </div>
+                      <div className="text-sm text-slate-500 dark:text-slate-400 mb-2">
+                        Version: {card.version}
+                      </div>
+                    </div>
+
+                    <blockquote className="text-2xl sm:text-3xl lg:text-4xl font-serif leading-relaxed text-slate-800 dark:text-slate-200 mb-6">
+                      &ldquo;{card.verse}&rdquo;
+                    </blockquote>
+
+                    <cite className="text-xl font-semibold text-blue-600 dark:text-blue-400">
+                      {card.verseLocation}
+                    </cite>
+
+                    <div className="flex justify-center space-x-4 mt-8">
+                      <Button
+                        variant="outline"
+                        onClick={() => handleGenerateAnother(card.query)}
+                        className="px-6 py-2 border-slate-300 dark:border-slate-500 text-slate-700 dark:text-slate-300 hover:bg-indigo-50 hover:border-indigo-400 hover:text-indigo-700"
+                      >
+                        <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                        </svg>
+                        Generate New
+                      </Button>
+                      <Button
+                        variant="outline"
+                        onClick={() => handleStudyScripture(card.verseLocation, card.verse)}
+                        className="px-6 py-2 border-slate-300 dark:border-slate-500 text-slate-700 dark:text-slate-300 hover:bg-green-50 hover:border-green-400 hover:text-green-700 dark:hover:bg-green-950/50 dark:hover:border-green-500 dark:hover:text-green-300"
+                      >
+                        <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                        </svg>
+                        Study Scripture
+                      </Button>
+                    </div>
+                  </div>
+                );
+              })()}
             </div>
+          ) : (
+            /* Placeholder for No Searches Yet */
+            <div className="space-y-6">
+              <div className="w-24 h-24 bg-slate-200 dark:bg-slate-700 rounded-full mx-auto animate-pulse"></div>
+              <div className="space-y-4">
+                <h3 className="text-2xl font-semibold text-slate-700 dark:text-slate-300">
+                  Ready to Search the Bible?
+                </h3>
+                <p className="text-slate-600 dark:text-slate-400 max-w-md mx-auto">
+                  Use the search bar above to ask questions about love, hope, forgiveness, or any topic you&apos;d like to explore in Scripture.
+                </p>
+              </div>
+            </div>
+          )}
+        </div>
+      </section>
 
-            {/* Search button - Reduced height on mobile */}
-            <Button 
-              onClick={() => handleSearch(query)}
-              disabled={isLoading}
-              className="relative z-20 h-12 sm:h-16 px-6 sm:px-12 rounded-none bg-gradient-to-r from-navy-600 to-sage-600 hover:from-navy-500 hover:to-sage-500 dark:from-navy-700 dark:to-navy-800 dark:hover:from-navy-600 dark:hover:to-navy-700 text-cream-50 transition-all duration-300 flex items-center justify-center gap-2 sm:gap-3 focus:outline-none focus-visible:outline-none"
-            >
-              {isLoading ? (
-                <Loader2 className="h-5 w-5 sm:h-6 sm:w-6 animate-spin" />
-              ) : (
-                <>
-                  <Search className="h-5 w-5 sm:h-6 sm:w-6" />
-                  <span className="text-base sm:text-lg font-medium">Ask</span>
-                </>
-              )}
-            </Button>
+      {/* Foldable Collection Section */}
+      {Object.keys(searchResults).length > 0 && (
+        <section className="px-4 sm:px-6 lg:px-8 pb-16">
+          <div className="max-w-6xl mx-auto">
+            <details className="group" open>
+              <summary className="cursor-pointer list-none">
+                <div className="flex items-center justify-center space-x-3 mb-8">
+                  <h2 className="text-3xl font-bold text-slate-900 dark:text-white">
+                    Your Bible Study Collection
+                  </h2>
+                  <ChevronDown className="w-6 h-6 text-slate-600 dark:text-slate-400 group-open:rotate-180 transition-transform" />
+                </div>
+              </summary>
+
+                             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3">
+                 {Object.entries(searchResults)
+                   .sort(([a], [b]) => parseInt(b) - parseInt(a))
+                   .map(([timestamp, card]) => (
+                     <motion.div
+                       key={timestamp}
+                       initial={{ opacity: 0, y: 20 }}
+                       animate={{ opacity: 1, y: 0 }}
+                       transition={{ duration: 0.5, delay: Math.random() * 0.3 }}
+                       className="group bg-white dark:bg-slate-800 rounded-3xl p-8 border border-slate-200 dark:border-slate-600 hover:shadow-2xl hover:scale-[1.02] transition-all duration-300 overflow-hidden relative min-h-[320px]"
+                     >
+                       {/* Header Section */}
+                       <div className="mb-8">
+                         <div className="flex items-start justify-between mb-4">
+                           <div className="flex-1 mr-4">
+                             <div className="inline-flex items-center px-4 py-2 bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400 text-sm font-medium rounded-full mb-3 line-clamp-2">
+                               <span className="truncate">{card.query}</span>
+                             </div>
+                           </div>
+                           <div className="flex-shrink-0">
+                             <span className="inline-flex items-center px-3 py-1.5 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-400 text-sm font-medium rounded-lg">
+                               {card.version}
+                             </span>
+                           </div>
+                         </div>
+                       </div>
+
+                       {/* Verse Content */}
+                       <div className="mb-8 flex-1">
+                         <blockquote className="text-base leading-relaxed font-serif text-slate-800 dark:text-slate-200 mb-6 line-clamp-5 italic">
+                           &ldquo;{card.verse}&rdquo;
+                         </blockquote>
+                         
+                         <cite className="text-base font-semibold text-blue-600 dark:text-blue-400 block">
+                           {card.verseLocation}
+                         </cite>
+                       </div>
+
+                       {/* Action Buttons */}
+                       <div className="flex items-center space-x-4">
+                         <Button
+                           variant="outline"
+                           size="sm"
+                           onClick={() => handleRefresh(timestamp)}
+                           className="flex-1 h-10 px-4 text-sm border-slate-300 dark:border-slate-500 text-slate-700 dark:text-slate-300 hover:bg-amber-50 hover:border-amber-400 hover:text-amber-700 dark:hover:bg-amber-950/50 dark:hover:border-amber-500 dark:hover:text-amber-300 transition-all duration-200"
+                         >
+                           <RefreshCw className="w-4 h-4 mr-2" />
+                           Another
+                         </Button>
+                         
+                         <Button
+                           variant="outline"
+                           size="sm"
+                           onClick={() => handleGenerateAnother(card.query)}
+                           className="flex-1 h-10 px-4 text-sm border-slate-300 dark:border-slate-500 text-slate-700 dark:text-slate-300 hover:bg-indigo-50 hover:border-indigo-400 hover:text-indigo-700 dark:hover:bg-indigo-950/50 dark:hover:border-indigo-500 dark:hover:text-indigo-300 transition-all duration-200"
+                         >
+                           <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                           </svg>
+                           New
+                         </Button>
+                         
+                         <Button
+                           variant="ghost"
+                           size="sm"
+                           onClick={() => handleDelete(timestamp)}
+                           className="h-10 w-10 p-0 hover:bg-red-50 hover:text-red-700 dark:hover:bg-red-950/50 dark:hover:text-red-300 transition-all duration-200"
+                         >
+                           <Trash2 className="w-5 h-5" />
+                         </Button>
+                       </div>
+                     </motion.div>
+                   ))}
+              </div>
+            </details>
           </div>
-        </div>
-
-        {/* Cards section - Adjusted height calculation */}
-        <div className="h-[calc(100vh-12rem)] sm:h-[calc(100vh-16rem)] overflow-hidden">
-          <Cards
-            results={searchResults}
-            isLoading={isLoading}
-            onRefresh={handleRefresh}
-            onDelete={handleDeleteCard}
-            version={version}
-          />
-        </div>
-      </main>
+        </section>
+      )}
     </div>
   );
 };
