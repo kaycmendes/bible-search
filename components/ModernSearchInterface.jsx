@@ -106,7 +106,7 @@ const ModernSearchInterface = ({
     <div className="min-h-0 bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 dark:from-slate-900 dark:via-blue-950 dark:to-indigo-950">
       {/* Search Header */}
       <div className="sticky top-16 z-40 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-slate-200/50 dark:border-slate-800/50">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pt-20 sm:pt-8">
           {/* Logo */}
           <div className="flex items-center justify-center mb-8">
             <div className="flex items-center space-x-3">
@@ -120,7 +120,8 @@ const ModernSearchInterface = ({
           </div>
 
           {/* Search Form */}
-          <form onSubmit={handleSubmit} className="relative">
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {/* Main Search Input */}
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-6 flex items-center pointer-events-none">
                 <Search className="h-6 w-6 text-slate-400" />
@@ -132,11 +133,15 @@ const ModernSearchInterface = ({
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Ask about love, hope, forgiveness, or any topic..."
-                className="w-full pl-14 pr-48 py-6 text-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all placeholder:text-slate-400"
+                className="w-full pl-14 pr-4 py-4 sm:py-6 text-base sm:text-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all placeholder:text-slate-400"
                 disabled={isLoading}
               />
-              
-              <div className="absolute inset-y-0 right-2 flex items-center space-x-2">
+            </div>
+
+            {/* Controls Row - Responsive Layout */}
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 items-stretch sm:items-center">
+              {/* Left Side - Voice & Version */}
+              <div className="flex items-center gap-3 justify-center sm:justify-start">
                 {/* Voice Search */}
                 <Button
                   type="button"
@@ -144,7 +149,7 @@ const ModernSearchInterface = ({
                   size="sm"
                   onClick={startVoiceSearch}
                   disabled={isLoading || !('webkitSpeechRecognition' in window)}
-                  className={`p-3 rounded-xl ${isListening ? 'bg-red-100 text-red-600 dark:bg-red-950/50 dark:text-red-400' : 'hover:bg-slate-100 dark:hover:bg-slate-700'}`}
+                  className={`p-3 rounded-xl flex-shrink-0 ${isListening ? 'bg-red-100 text-red-600 dark:bg-red-950/50 dark:text-red-400' : 'hover:bg-slate-100 dark:hover:bg-slate-700'}`}
                 >
                   <Mic className={`w-5 h-5 ${isListening ? 'animate-pulse' : ''}`} />
                 </Button>
@@ -153,37 +158,37 @@ const ModernSearchInterface = ({
                 <VersionSelector
                   version={version}
                   onVersionChange={onVersionChange}
-                  className="min-w-[80px]"
+                  className="min-w-[100px] sm:min-w-[80px]"
                 />
-                
-                {/* Search Button */}
-                <Button
-                  type="submit"
-                  disabled={!query.trim() || isLoading}
-                  className="
-                    ml-2
-                    px-6 py-3
-                    rounded-xl font-semibold
-                    shadow-lg hover:shadow-xl
-                    bg-blue-600 text-white
-                    dark:bg-blue-400 dark:text-navy-900
-                    transition-all duration-200
-                    hover:bg-blue-700 dark:hover:bg-blue-300
-                    hover:scale-105
-                    focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-2
-                    disabled:opacity-50 disabled:cursor-not-allowed
-                  "
-                >
-                  {isLoading ? (
-                    <div className="flex items-center">
-                      <Sparkles className="w-5 h-5 mr-2 animate-spin" />
-                      Searching
-                    </div>
-                  ) : (
-                    'Search'
-                  )}
-                </Button>
               </div>
+
+              {/* Right Side - Search Button */}
+              <Button
+                type="submit"
+                disabled={!query.trim() || isLoading}
+                className="
+                  flex-1 sm:flex-none
+                  px-6 py-3 sm:py-3
+                  rounded-xl font-semibold
+                  shadow-lg hover:shadow-xl
+                  bg-blue-600 text-white
+                  dark:bg-blue-400 dark:text-navy-900
+                  transition-all duration-200
+                  hover:bg-blue-700 dark:hover:bg-blue-300
+                  hover:scale-105
+                  focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-2
+                  disabled:opacity-50 disabled:cursor-not-allowed
+                "
+              >
+                {isLoading ? (
+                  <div className="flex items-center justify-center">
+                    <Sparkles className="w-5 h-5 mr-2 animate-spin" />
+                    Searching
+                  </div>
+                ) : (
+                  'Search'
+                )}
+              </Button>
             </div>
           </form>
 
