@@ -1,16 +1,54 @@
 export default async function handler(req, res) {
-  if (req.method !== 'POST') {
-    return res.status(405).json({ message: 'Method not allowed' });
+  // Handle CORS preflight requests
+  if (req.method === 'OPTIONS') {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    return res.status(200).end();
   }
+
+  // Only allow POST requests for actual search
+  if (req.method !== 'POST') {
+    return res.status(405).json({ 
+      message: 'Method not allowed',
+      allowedMethods: ['POST'],
+      receivedMethod: req.method 
+    });
+  }
+
+  // Set CORS headers for POST requests
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
   try {
     const { query, version, lastVerse } = req.body;
 
-    if (!process.env.GOOGLE_GEMINI_API_KEY) {
-      return res.status(500).json({ error: 'Google Gemini API key not configured' });
+    // Validate request body
+    if (!req.body || typeof req.body !== 'object') {
+      console.error('Invalid request body:', req.body);
+      return res.status(400).json({ 
+        message: 'Invalid request body',
+        details: 'Request body must be a valid JSON object'
+      });
     }
 
-    console.log('Starting search for:', query, 'Version:', version);
+    if (!query || typeof query !== 'string') {
+      return res.status(400).json({ 
+        message: 'Missing or invalid query parameter',
+        details: 'Query must be a non-empty string'
+      });
+    }
+
+    if (!process.env.GOOGLE_GEMINI_API_KEY) {
+      console.error('GOOGLE_GEMINI_API_KEY not configured');
+      return res.status(500).json({ 
+        message: 'API key not configured',
+        details: 'Please configure GOOGLE_GEMINI_API_KEY environment variable'
+      });
+    }
+
+    console.log('Starting search for:', query, 'Version:', version, 'Method:', req.method);
 
     const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${process.env.GOOGLE_GEMINI_API_KEY}`, {
       method: 'POST',
@@ -75,8 +113,9 @@ export default async function handler(req, res) {
     });
 
     if (!response.ok) {
-      console.error('API Error Status:', response.status);
-      console.error('API Error Text:', await response.text());
+      const errorText = await response.text();
+      console.error('Gemini API Error Status:', response.status);
+      console.error('Gemini API Error Text:', errorText);
       
       if (response.status === 503) {
         return res.status(503).json({ 
@@ -84,8 +123,23 @@ export default async function handler(req, res) {
         });
       }
 
+      if (response.status === 429) {
+        return res.status(429).json({ 
+          message: 'Rate limit exceeded. Please wait a moment before searching again.',
+          details: 'Too many requests to the search API'
+        });
+      }
+
+      if (response.status === 400) {
+        return res.status(400).json({ 
+          message: 'Invalid search request',
+          details: errorText
+        });
+      }
+
       return res.status(response.status).json({ 
-        message: `API request failed with status ${response.status}` 
+        message: `Search API request failed with status ${response.status}`,
+        details: errorText
       });
     }
 
