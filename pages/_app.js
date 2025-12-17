@@ -9,13 +9,51 @@ import { registerServiceWorker } from '@/lib/pwa'
 
 function MyApp({ Component, pageProps: { session, ...pageProps } }) {
   useEffect(() => {
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker
-        .register('/service-worker.js')
-        .then(() => console.log('Service Worker registered'))
-        .catch(err => console.log('Service Worker registration failed:', err))
-    }
-    registerServiceWorker()
+    // Force update service worker on load
+    const forceUpdateSW = async () => {
+      if ('serviceWorker' in navigator) {
+        try {
+          const registrations = await navigator.serviceWorker.getRegistrations();
+          
+          // Check if we need to force update (version check)
+          const needsUpdate = sessionStorage.getItem('sw-needs-update');
+          
+          if (needsUpdate === 'true' && registrations.length > 0) {
+            console.log('🔄 Forcing service worker update...');
+            
+            // Unregister old workers
+            for (const registration of registrations) {
+              await registration.unregister();
+            }
+            
+            // Clear caches
+            if ('caches' in window) {
+              const cacheNames = await caches.keys();
+              for (const cacheName of cacheNames) {
+                await caches.delete(cacheName);
+              }
+            }
+            
+            sessionStorage.removeItem('sw-needs-update');
+            console.log('✅ Service worker updated, reloading...');
+            window.location.reload(true);
+            return;
+          }
+          
+          // Register new service worker
+          navigator.serviceWorker
+            .register('/service-worker.js')
+            .then(() => console.log('Service Worker registered'))
+            .catch(err => console.log('Service Worker registration failed:', err));
+            
+        } catch (error) {
+          console.error('Service worker update error:', error);
+        }
+      }
+      registerServiceWorker();
+    };
+    
+    forceUpdateSW();
   }, [])
 
   useEffect(() => {

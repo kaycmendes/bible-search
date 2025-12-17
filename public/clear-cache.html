@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clear Service Worker Cache - Ask the Bible</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+        h1 { margin-top: 0; }
+        button {
+            background: white;
+            color: #667eea;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            margin: 10px 5px;
+            transition: transform 0.2s;
+        }
+        button:hover {
+            transform: scale(1.05);
+        }
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .status {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            font-family: monospace;
+        }
+        .success { color: #4ade80; }
+        .error { color: #f87171; }
+        .info { color: #60a5fa; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Clear Service Worker & Cache</h1>
+        <p>If you're experiencing issues with the app, use this tool to clear all cached data and service workers.</p>
+        
+        <div id="status" class="status">
+            <div class="info">Ready to clear cache...</div>
+        </div>
+
+        <button onclick="clearEverything()" id="clearBtn">🗑️ Clear All Cache & Service Workers</button>
+        <button onclick="window.location.href='/'" id="homeBtn" style="display:none;">🏠 Return to App</button>
+        
+        <h3>Manual Steps (if button doesn't work):</h3>
+        <ol style="text-align: left;">
+            <li>Open DevTools (F12 or Ctrl+Shift+I)</li>
+            <li>Go to <strong>Application</strong> tab</li>
+            <li>Click <strong>Service Workers</strong> in sidebar</li>
+            <li>Click <strong>Unregister</strong> on all workers</li>
+            <li>Click <strong>Clear site data</strong> at top</li>
+            <li>Close and reopen the browser</li>
+        </ol>
+    </div>
+
+    <script>
+        async function clearEverything() {
+            const statusDiv = document.getElementById('status');
+            const clearBtn = document.getElementById('clearBtn');
+            const homeBtn = document.getElementById('homeBtn');
+            
+            clearBtn.disabled = true;
+            statusDiv.innerHTML = '<div class="info">Starting cleanup...</div>';
+
+            try {
+                // 1. Unregister all service workers
+                if ('serviceWorker' in navigator) {
+                    const registrations = await navigator.serviceWorker.getRegistrations();
+                    statusDiv.innerHTML += `<div class="info">Found ${registrations.length} service worker(s)...</div>`;
+                    
+                    for (let registration of registrations) {
+                        await registration.unregister();
+                        statusDiv.innerHTML += '<div class="success">✓ Unregistered service worker</div>';
+                    }
+                } else {
+                    statusDiv.innerHTML += '<div class="info">No service worker support</div>';
+                }
+
+                // 2. Clear all caches
+                if ('caches' in window) {
+                    const cacheNames = await caches.keys();
+                    statusDiv.innerHTML += `<div class="info">Found ${cacheNames.length} cache(s)...</div>`;
+                    
+                    for (let cacheName of cacheNames) {
+                        await caches.delete(cacheName);
+                        statusDiv.innerHTML += `<div class="success">✓ Deleted cache: ${cacheName}</div>`;
+                    }
+                } else {
+                    statusDiv.innerHTML += '<div class="info">No cache API support</div>';
+                }
+
+                // 3. Clear localStorage
+                try {
+                    localStorage.clear();
+                    statusDiv.innerHTML += '<div class="success">✓ Cleared localStorage</div>';
+                } catch (e) {
+                    statusDiv.innerHTML += '<div class="error">✗ Failed to clear localStorage: ' + e.message + '</div>';
+                }
+
+                // 4. Clear sessionStorage
+                try {
+                    sessionStorage.clear();
+                    statusDiv.innerHTML += '<div class="success">✓ Cleared sessionStorage</div>';
+                } catch (e) {
+                    statusDiv.innerHTML += '<div class="error">✗ Failed to clear sessionStorage: ' + e.message + '</div>';
+                }
+
+                // Success message
+                statusDiv.innerHTML += '<div class="success" style="font-size: 18px; margin-top: 20px;">🎉 All done! Click "Return to App" below.</div>';
+                statusDiv.innerHTML += '<div class="info">Tip: For best results, close and reopen your browser.</div>';
+                
+                homeBtn.style.display = 'inline-block';
+                
+            } catch (error) {
+                statusDiv.innerHTML += `<div class="error">✗ Error: ${error.message}</div>`;
+                clearBtn.disabled = false;
+            }
+        }
+
+        // Auto-check on load
+        window.addEventListener('load', async () => {
+            const statusDiv = document.getElementById('status');
+            
+            if ('serviceWorker' in navigator) {
+                const registrations = await navigator.serviceWorker.getRegistrations();
+                if (registrations.length > 0) {
+                    statusDiv.innerHTML = `<div class="error">⚠️ Found ${registrations.length} active service worker(s). Click button to clear.</div>`;
+                } else {
+                    statusDiv.innerHTML = '<div class="success">✓ No active service workers found.</div>';
+                }
+            }
+            
+            if ('caches' in window) {
+                const cacheNames = await caches.keys();
+                if (cacheNames.length > 0) {
+                    statusDiv.innerHTML += `<div class="error">⚠️ Found ${cacheNames.length} active cache(s). Click button to clear.</div>`;
+                } else {
+                    statusDiv.innerHTML += '<div class="success">✓ No active caches found.</div>';
+                }
+            }
+        });
+    </script>
+</body>
+</html>
