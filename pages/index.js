@@ -21,6 +21,7 @@ const Home = () => {
   const { data: session, status } = useSession();
   const { theme } = useTheme();
   const [mounted, setMounted] = useState(false);
+  const [lastSearchTime, setLastSearchTime] = useState(0);
 
   // Call the authentication listener hook
   useAuthListener();
@@ -71,8 +72,20 @@ const Home = () => {
   const handleSearch = async (searchQuery) => {
     if (!searchQuery.trim()) return;
 
+    // Client-side rate limiting: prevent requests within 2 seconds
+    const now = Date.now();
+    const timeSinceLastSearch = now - lastSearchTime;
+    if (timeSinceLastSearch < 2000) {
+      toast.error('Please wait a moment before searching again.', {
+        icon: '⏳',
+        duration: 2000
+      });
+      return;
+    }
+
     setIsLoading(true);
-    const timestamp = Date.now();
+    setLastSearchTime(now);
+    const timestamp = now;
 
     try {
       const response = await fetch('/api/search', {
@@ -87,11 +100,22 @@ const Home = () => {
         }),
       });
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+      const data = await response.json();
+
+      // Handle rate limiting specifically
+      if (response.status === 429) {
+        toast.error('Rate limit reached. Please wait 30 seconds before searching again.', {
+          icon: '⏳',
+          duration: 5000
+        });
+        setIsLoading(false);
+        return;
       }
 
-      const data = await response.json();
+      if (!response.ok) {
+        const errorMessage = data.message || `HTTP error! status: ${response.status}`;
+        throw new Error(errorMessage);
+      }
 
       if (data.verse && data.verseLocation) {
         const newCard = {
@@ -152,8 +176,20 @@ const Home = () => {
     const card = searchResults[timestamp];
     if (!card) return;
 
+    // Check rate limiting
+    const now = Date.now();
+    const timeSinceLastSearch = now - lastSearchTime;
+    if (timeSinceLastSearch < 2000) {
+      toast.error('Please wait a moment before searching again.', {
+        icon: '⏳',
+        duration: 2000
+      });
+      return;
+    }
+
     setIsLoading(true);
-    const newTimestamp = Date.now();
+    setLastSearchTime(now);
+    const newTimestamp = now;
 
     try {
       const response = await fetch('/api/search', {
@@ -168,11 +204,22 @@ const Home = () => {
         }),
       });
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+      const data = await response.json();
+
+      // Handle rate limiting specifically
+      if (response.status === 429) {
+        toast.error('Rate limit reached. Please wait 30 seconds before trying again.', {
+          icon: '⏳',
+          duration: 5000
+        });
+        setIsLoading(false);
+        return;
       }
 
-      const data = await response.json();
+      if (!response.ok) {
+        const errorMessage = data.message || `HTTP error! status: ${response.status}`;
+        throw new Error(errorMessage);
+      }
 
       if (data.verse && data.verseLocation) {
         const newCard = {
