@@ -13,19 +13,40 @@
   ],
   "headers": [
     {
-      "source": "/api/(.*)",
+      "source": "/api/search",
       "headers": [
         { 
           "key": "Access-Control-Allow-Origin", 
-          "value": "https://aiaskthebible.vercel.app"
+          "value": "*"
         },
         {
           "key": "Access-Control-Allow-Methods",
-          "value": "GET, POST, DELETE"
+          "value": "POST, OPTIONS"
         },
         {
           "key": "Access-Control-Allow-Headers",
-          "value": "X-Requested-With, Content-Type, Authorization"
+          "value": "Content-Type, Authorization"
+        },
+        {
+          "key": "Cache-Control",
+          "value": "no-store, no-cache, must-revalidate"
+        }
+      ]
+    },
+    {
+      "source": "/api/(cards|auth)/(.*)",
+      "headers": [
+        { 
+          "key": "Access-Control-Allow-Origin", 
+          "value": "*"
+        },
+        {
+          "key": "Access-Control-Allow-Methods",
+          "value": "GET, POST, DELETE, PATCH, OPTIONS"
+        },
+        {
+          "key": "Access-Control-Allow-Headers",
+          "value": "Content-Type, Authorization"
         }
       ]
     },
